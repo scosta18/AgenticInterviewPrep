@@ -1,0 +1,6 @@
+ollama==0.6.2
+openai-whisper
+sounddevice
+soundfile
+pyttsx3
+numpy
