@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.env
+*.wav
+*.mp3
+data/
+backend/core/config.py
+*.db
+.chroma/
