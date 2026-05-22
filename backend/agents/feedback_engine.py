@@ -1,7 +1,7 @@
 import re
 from langchain_community.llms import Ollama
-from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain
+from langchain_core.prompts import PromptTemplate
+# from langchain.chains import LLMChain
 from core.config import get_settings
 
 
@@ -51,18 +51,15 @@ def get_feedback(
     company_name: str = "the company",
     role: str = "the role"
 ) -> tuple[str, int]:
-    """Get feedback and score for an answer"""
-    chain = LLMChain(llm=llm, prompt=feedback_prompt)
+    chain = feedback_prompt | llm
     result = chain.invoke({
         "company": company_name,
         "role": role,
         "question": question,
         "answer": answer
     })
-    feedback_text = result['text']
-    score = extract_score(feedback_text)
-    
-    return feedback_text, score
+    score = extract_score(result)
+    return result, score
 
 
 
