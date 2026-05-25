@@ -65,9 +65,19 @@ export default function History() {
             <h2 className="text-lg font-semibold text-white">
               {detail.session.company_name} — {detail.session.role}
             </h2>
-            <span className="text-purple-400 font-mono text-sm">
-              Avg: {detail.average_score}/10
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="text-purple-400 font-mono text-sm">
+                Avg: {detail.average_score}/10
+              </span>
+              <a
+                href={`http://localhost:8000/sessions/${detail.session.id}/report`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-lg transition-colors"
+              >
+                Download PDF
+              </a>
+            </div>
           </div>
 
           {detail.questions.map((q, i) => (

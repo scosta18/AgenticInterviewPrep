@@ -6,6 +6,13 @@ from core.vector_store import store_job_context
 from agents.scrapper import run_research
 from agents.question_generator import generate_questions
 from agents.feedback_engine import get_feedback
+from fastapi import APIRouter, HTTPException, UploadFile, File
+import tempfile
+import os
+import whisper
+import edge_tts
+from fastapi.responses import StreamingResponse
+import io
 
 router = APIRouter(prefix="/interview", tags=["Interview"])
 
@@ -108,3 +115,48 @@ async def get_session(session_id):
 async def finish_session(session_id: int):
     complete_session(session_id)
     return {"status": "session completed"}
+
+
+whisper_model = whisper.load_model("base")
+@router.post("/transcribe")
+async def transcribe_audio(audio: UploadFile = File(...)):
+    """Transcribe audio file using Whisper"""
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as tmp:
+            content = await audio.read()
+            tmp.write(content)
+            tmp_path = tmp.name
+            
+        result = whisper_model.transcribe(tmp_path, language="en")
+        os.unlink(tmp_path)
+        
+        return {"text": result["text"].strip()}
+    
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+    
+    
+    
+@router.post("/speak")
+async def speak_text(data: dict):
+    """Convert text to speech using edge-tts"""
+    try:
+        text = data.get("text", "")
+        communicate = edge_tts.Communicate(text, voice="en-US-GuyNeural")
+        
+        audio_buffer = io.BytesIO()
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                audio_buffer.write(chunk["data"])
+        
+        audio_buffer.seek(0)
+        return StreamingResponse(
+            audio_buffer,
+            media_type="audio/mpeg"
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
