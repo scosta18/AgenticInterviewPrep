@@ -6,7 +6,8 @@ export default function Setup({ onSessionStart }) {
     company_name: '',
     role: '',
     job_description: '',
-    company_context: ''
+    company_context: '',
+    num_questions: 5
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -25,7 +26,10 @@ export default function Setup({ onSessionStart }) {
     setError('')
 
     try {
-      const res = await startSession(form)
+      const res = await startSession({
+        ...form,
+        num_questions: parseInt(form.num_questions)
+      })
       onSessionStart(res.data)
     } catch (err) {
       setError('Failed to start session. Make sure the backend is running.')
@@ -67,6 +71,26 @@ export default function Setup({ onSessionStart }) {
         </div>
       </div>
 
+      {/* Question count selector */}
+      <div>
+        <label className="text-sm text-slate-400 block mb-2">Number of Questions</label>
+        <div className="flex gap-3">
+          {[3, 5, 10, 15].map(n => (
+            <button
+              key={n}
+              onClick={() => setForm({ ...form, num_questions: n })}
+              className={`flex-1 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
+                form.num_questions === n
+                  ? 'bg-purple-600 border-purple-500 text-white'
+                  : 'bg-dark-700 border-dark-600 text-slate-400 hover:border-dark-500'
+              }`}
+            >
+              {n === 3 ? '3 — Quick' : n === 5 ? '5 — Standard' : n === 10 ? '10 — Full' : '15 — Intensive'}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div>
         <label className="text-sm text-slate-400 block mb-1.5">Job Description</label>
         <textarea
@@ -102,7 +126,7 @@ export default function Setup({ onSessionStart }) {
         disabled={loading}
         className="w-full bg-purple-600 hover:bg-purple-500 disabled:bg-dark-600 disabled:text-slate-500 text-white font-medium py-3 rounded-lg transition-colors"
       >
-        {loading ? '🔍 Researching company and generating questions...' : 'Start Interview Session'}
+        {loading ? '🔍 Researching and generating questions...' : `Start Session — ${form.num_questions} Questions`}
       </button>
     </div>
   )

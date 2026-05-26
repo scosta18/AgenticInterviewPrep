@@ -21,6 +21,7 @@ class StartSessionRequest(BaseModel):
     role: str
     job_description: str
     company_context: str = ""
+    num_questions: int = 5
     
 class AnswerRequest(BaseModel):
     session_id: int
@@ -58,7 +59,8 @@ async def start_session(request: StartSessionRequest):
             session_id,
             request.company_name,
             request.role,
-            request.job_description
+            request.job_description,
+            request.num_questions
         )
         print(f"✅ Questions generated")
 

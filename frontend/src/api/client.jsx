@@ -15,7 +15,6 @@ export const getSessions = () => api.get('/sessions')
 export const transcribeAudio = (formData) => api.post('/interview/transcribe', formData, {
   headers: { 'Content-Type': 'multipart/form-data' }
 })
-
 export const speakText = (text) => api.post('/interview/speak', { text }, {
   responseType: 'blob'
 })
