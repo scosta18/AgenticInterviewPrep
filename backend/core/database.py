@@ -43,7 +43,7 @@ def init_db():
 
     conn.commit()
     conn.close()
-    print("✅ Database initialized")
+    print("Database initialized")
 
 def create_session(company_name: str, role: str) -> int:
     """Start a new interview session, return session ID"""

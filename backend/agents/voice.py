@@ -40,7 +40,7 @@ def listen(duration=15, silence_threshold=0.01):
         dtype='float32'
     )
     sd.wait()
-    print("✅ Processing your answer...")
+    print("Processing your answer...")
 
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
         temp_path = f.name

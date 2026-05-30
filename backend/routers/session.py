@@ -21,9 +21,9 @@ async def download_report(session_id: int):
     """Generate and download PDF report for a session"""
     try:
         session_data = get_session_results(session_id)
-        print(f"✅ Session data fetched: {session_data['session']}")
+        print(f"Session data fetched: {session_data['session']}")
         filepath = generate_report(session_data)
-        print(f"✅ Report filepath: {filepath}")
+        print(f"Report filepath: {filepath}")
 
         if not os.path.exists(filepath):
             raise HTTPException(status_code=404, detail="Report generation failed")

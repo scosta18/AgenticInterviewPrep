@@ -36,7 +36,7 @@ async def start_session(request: StartSessionRequest):
     try:
         # Create session in DB
         session_id = create_session(request.company_name, request.role)
-        print(f"✅ Session created: {session_id}")
+        print(f"Session created: {session_id}")
 
         # Store job context in vector DB
         store_job_context(
@@ -44,7 +44,7 @@ async def start_session(request: StartSessionRequest):
             request.job_description,
             request.company_context
         )
-        print(f"✅ Job context stored")
+        print(f"Job context stored")
 
         # Scrape web for real interview data
         research_summary = await run_research(
@@ -52,7 +52,7 @@ async def start_session(request: StartSessionRequest):
             request.company_name,
             request.role
         )
-        print(f"✅ Research done: {research_summary}")
+        print(f"Research done: {research_summary}")
 
         # Generate targeted questions
         questions_text = generate_questions(
@@ -62,7 +62,7 @@ async def start_session(request: StartSessionRequest):
             request.job_description,
             request.num_questions
         )
-        print(f"✅ Questions generated")
+        print(f"Questions generated")
 
         return {
             "session_id": session_id,

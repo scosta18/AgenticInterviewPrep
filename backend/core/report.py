@@ -107,5 +107,5 @@ def generate_report(session_data: dict) -> str:
     os.makedirs('data/reports', exist_ok=True)
     filename = f"data/reports/session_{session['id']}_{session['company_name'].replace(' ', '_')}.pdf"
     pdf.output(filename)
-    print(f"✅ Report generated: {filename}")
+    print(f"Report generated: {filename}")
     return filename
