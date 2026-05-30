@@ -31,7 +31,8 @@ feedback_prompt = PromptTemplate(
         4. Stronger Answer:
         [Write a better version of their answer in 3-4 sentences]
 
-        Be brutally honest, with motivation at the end. Focus on what matters for this specific role.
+        Be brutally honest, with motivation at the end. Focus on what matters for this specific role, if the answer is irrelevant,
+        to the question and the company topic dont give out any score for it.
     """
     
 )
