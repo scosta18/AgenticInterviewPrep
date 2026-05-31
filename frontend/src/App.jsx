@@ -1,13 +1,14 @@
-import {useState} from 'react'
+import { useState } from 'react'
 import Setup from './components/Setup'
 import Interview from './components/Interview'
-import History from  './components/History'
+import History from './components/History'
+import Dashboard from './components/Dashboard'
 
-export default function App(){
+export default function App() {
   const [screen, setScreen] = useState('setup')
-  const [sessionData, setSessionData] = useState({})
+  const [sessionData, setSessionData] = useState(null)
 
-  const handleSessionStart = (data) =>{
+  const handleSessionStart = (data) => {
     setSessionData(data)
     setScreen('interview')
   }
@@ -22,44 +23,30 @@ export default function App(){
           </div>
           <span className="font-semibold text-white">Interview Prep AI</span>
         </div>
-        <nav className="flex gap-4">
-          <button
-            onClick={() => setScreen('setup')}
-            className={`text-sm px-3 py-1.5 rounded-lg transition-colors ${
-              screen === 'setup'
-                ? 'bg-purple-600 text-white'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            New Session
-          </button>
-          <button
-            onClick={() => setScreen('history')}
-            className={`text-sm px-3 py-1.5 rounded-lg transition-colors ${
-              screen === 'history'
-                ? 'bg-purple-600 text-white'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            History
-          </button>
+        <nav className="flex gap-2">
+          {['setup', 'dashboard', 'history'].map(s => (
+            <button
+              key={s}
+              onClick={() => setScreen(s)}
+              className={`text-sm px-3 py-1.5 rounded-lg transition-colors capitalize ${
+                screen === s
+                  ? 'bg-purple-600 text-white'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              {s === 'setup' ? 'New Session' : s}
+            </button>
+          ))}
         </nav>
       </header>
 
-      {/* Main content */}
       <main className="max-w-4xl mx-auto px-6 py-8">
-        {screen === 'setup' && (
-          <Setup onSessionStart={handleSessionStart} />
-        )}
+        {screen === 'setup' && <Setup onSessionStart={handleSessionStart} />}
         {screen === 'interview' && sessionData && (
-          <Interview
-            sessionData={sessionData}
-            onComplete={() => setScreen('history')}
-          />
+          <Interview sessionData={sessionData} onComplete={() => setScreen('dashboard')} />
         )}
-        {screen === 'history' && (
-          <History />
-        )}
+        {screen === 'dashboard' && <Dashboard />}
+        {screen === 'history' && <History />}
       </main>
     </div>
   )

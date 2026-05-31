@@ -1,0 +1,87 @@
+GC
+
+
+Senior Software Developer - IT
+
+
+Job highlights
+Identified by Google from the original job post
+Benefits
+Full-time exempt position with benefits
+Remuneration Range: 89-104% ($83k - $97k annually)
+Salary employees receive comprehensive benefits packages, including health insurance, paid time off, and retirement savings plans, etc
+Responsibilities
+The Senior Software Developer is responsible for the hands-on design, development, and maintenance of enterprise Java-based applications and open-source software solutions that support the mission of the organization
+The role also carries architectural responsibilities, including establishing technical standards and guiding system design decisions
+This role will serve as a technical lead on key projects, ensuring that applications are scalable, secure, and aligned with the department’s strategy
+Associate Director, Software Solutions
+Software Development
+Designs, develops, tests, debugs, and deploys enterprise applications that may use Java, Spring Framework, and/or related open-source frameworks and technologies
+Writes clean, maintainable, and well-documented code following established coding standards and best practices
+Develops and maintains RESTful APIs, and integration components that connect enterprise systems
+Performs code reviews and contributes to the continuous improvement of code quality across the development team
+Works closely with other programmers, administrators, and technical staff in the development and integration of software solutions
+Diagnoses, troubleshoots, and resolves application performance issues
+Participates in all phases of the software development lifecycle (SDLC), from requirements gathering through deployment and post-release support
+Collaborates with departmental stakeholders to gather requirements, understand business needs, and translate them into technical solutions
+Maintains familiarity with version control tools and methodologies (i.e., Git)
+Responsible for the conceptual, logical, and physical structure of the applications database
+Software Architecture & Technical Leadership
+Participate in the design, development, and implementation of enterprise architecture standards, tools, and methodologies, including the evaluation and integration of open-source technologies and solutions
+Provides architectural guidance on Java/open-source application design, including technology selection, system integration patterns, and database architecture
+Evaluates and recommends frameworks, libraries, and tools for adoption, with emphasis on open-source solutions that align with organizational objectives and sustainability goals
+Develops and maintains comprehensive technical documentation to ensure continuity of institutional knowledge and reduce single points of failure across our application portfolio
+Contribute to the development of long-term technology roadmaps in collaboration with the technology leadership team, incorporating open-source alternatives and solutions where appropriate
+Research and assess emerging technologies including open-source opportunities, evaluate products and services, and provide recommendations to the Director for potential adoption
+Serves as a technical resource and mentor to other developers on the team, fostering knowledge sharing and professional growth in Java and open-source technologies
+Serves on boards and committees as assigned, provides project updates, and present architecture recommendations
+Must be a member in regular standing of the Seventh-day Adventist Church
+Must maintain a regular and reliable work schedule
+Other duties as assigned by the supervisor
+Job description
+Please be sure to submit a current resume when applying for this position
+
+POSITION SUMMARY
+
+The Senior Software Developer is responsible for the hands-on design, development, and maintenance of enterprise Java-based applications and open-source software solutions that support the mission of the organization. The role also carries architectural responsibilities, including establishing technical standards and guiding system design decisions. This role will serve as a technical lead on key projects, ensuring that applications are scalable, secure, and aligned with the department’s strategy.
+
+COMPENSATION
+• Full-time exempt position with benefits
+• Remuneration Range: 89-104% ($83k - $97k annually)
+
+BENEFITS
+
+Salary employees receive comprehensive benefits packages, including health insurance, paid time off, and retirement savings plans, etc.
+
+SUPERVISOR
+
+Associate Director, Software Solutions
+
+ESSENTIAL JOB FUNCTIONS
+
+1. Software Development
+• Designs, develops, tests, debugs, and deploys enterprise applications that may use Java, Spring Framework, and/or related open-source frameworks and technologies.
+• Writes clean, maintainable, and well-documented code following established coding standards and best practices.
+• Develops and maintains RESTful APIs, and integration components that connect enterprise systems.
+• Performs code reviews and contributes to the continuous improvement of code quality across the development team.
+• Works closely with other programmers, administrators, and technical staff in the development and integration of software solutions.
+• Diagnoses, troubleshoots, and resolves application performance issues.
+• Participates in all phases of the software development lifecycle (SDLC), from requirements gathering through deployment and post-release support.
+• Collaborates with departmental stakeholders to gather requirements, understand business needs, and translate them into technical solutions.
+• Maintains familiarity with version control tools and methodologies (i.e., Git).
+• Responsible for the conceptual, logical, and physical structure of the applications database.
+
+2. Software Architecture & Technical Leadership
+• Participate in the design, development, and implementation of enterprise architecture standards, tools, and methodologies, including the evaluation and integration of open-source technologies and solutions.
+• Provides architectural guidance on Java/open-source application design, including technology selection, system integration patterns, and database architecture.
+• Evaluates and recommends frameworks, libraries, and tools for adoption, with emphasis on open-source solutions that align with organizational objectives and sustainability goals.
+• Develops and maintains comprehensive technical documentation to ensure continuity of institutional knowledge and reduce single points of failure across our application portfolio.
+• Contribute to the development of long-term technology roadmaps in collaboration with the technology leadership team, incorporating open-source alternatives and solutions where appropriate.
+• Research and assess emerging technologies including open-source opportunities, evaluate products and services, and provide recommendations to the Director for potential adoption.
+• Serves as a technical resource and mentor to other developers on the team, fostering knowledge sharing and professional growth in Java and open-source technologies.
+
+3. General
+• Serves on boards and committees as assigned, provides project updates, and present architecture recommendations.
+• Must be a member in regular standing of the Seventh-day Adventist Church
+• Must maintain a regular and reliable work schedule.
+• Other duties as assigned by the supervisor.

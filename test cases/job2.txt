@@ -1,0 +1,95 @@
+UMGC
+
+Cybersecurity Threat Hunter
+
+
+
+Job highlights
+Identified by Google from the original job post
+Qualifications
+Strong knowledge of threat actor tactics, techniques, and procedures (TTPs) and experience using frameworks such as MITRE ATT&CK
+Proficiency with EDR tools, SIEM platforms, and threat intelligence platforms
+Ability to develop detection logic using scripting or query languages (e.g., PowerShell, Bash, Python)
+12 more items(s)
+Benefits
+Full-time, Exempt Regular, Pay Grade 3.4
+Generous Time Off: Enjoy 22 days of paid vacation, 15 days of sick leave, 3 personal days, and 16 paid holidays (17 during general election years)
+For part-time employees, time off rates will be prorated based on the number of hours worked
+11 more items(s)
+Responsibilities
+In this role, you will be responsible for proactively identifying advanced threats and developing detection strategies to protect enterprise assets
+You will apply your deep expertise in adversary tactics, techniques, and procedures (TTPs), threat intelligence, and endpoint/network telemetry to hunt, investigate, and mitigate complex threats in our hybrid multi-cloud environment
+Lead proactive threat hunting activities across endpoints, network, and cloud environments to detect anomalous behaviors and emerging threats
+10 more items(s)
+More job highlights
+Job description
+Cybersecurity Threat HunterSecurity OperationsUS Exempt RegularFull timeStateside Exempt 3.4
+
+Cybersecurity Threat Hunter
+
+Security Operations
+
+Full-time, Exempt Regular, Pay Grade 3.4
+
+Location: Hybrid (Occasional onsite presence in Adelphi, MD)
+
+We are seeking a highly skilled and proactive Cybersecurity Threat Hunter to join our Information Security team. In this role, you will be responsible for proactively identifying advanced threats and developing detection strategies to protect enterprise assets. You will apply your deep expertise in adversary tactics, techniques, and procedures (TTPs), threat intelligence, and endpoint/network telemetry to hunt, investigate, and mitigate complex threats in our hybrid multi-cloud environment.
+
+Duties and Responsibilities:
+• Lead proactive threat hunting activities across endpoints, network, and cloud environments to detect anomalous behaviors and emerging threats.
+• Analyze large security logs to identify patterns of malicious activity and Indicators of Compromise (IOCs) using our SIEM and EDR platforms, augmenting analysis with threat intelligence feeds.
+• Develop and refine hypotheses for hunting campaigns based on current threat landscape and adversary TTPs (e.g., MITRE ATT&CK).
+• Collaborate with the bigger Information Security team and other cross-functional teams to triage, escalate, and respond to identified threats.
+• Design and implement custom detection logic and rules to improve threat detection efficacy within SIEM tool.
+• Perform analysis on phishing emails, malicious files, and other threat artifacts when required.
+• Develop documentation, hunting playbooks, and knowledge transfer materials for junior analysts and other stakeholders.
+• Produce relevant valuable reports following threat assessments highlighting recommendations to improve security.
+• Provide expert-level consultation on threat hunting methodologies and cyber adversary techniques.
+• Maintain awareness of the latest security threats, vulnerabilities, and attack techniques through continuous research.
+• Mentor and guide tier 1 engineers, fostering skill development and knowledge sharing.
+
+Skills and Competencies:
+• Strong knowledge of threat actor tactics, techniques, and procedures (TTPs) and experience using frameworks such as MITRE ATT&CK.
+• Proficiency with EDR tools, SIEM platforms, and threat intelligence platforms.
+• Ability to develop detection logic using scripting or query languages (e.g., PowerShell, Bash, Python).
+• Experience with log and packet analysis, endpoint forensics, and malware reverse engineering.
+• In-depth understanding of operating system internals (Windows, Linux), network protocols, and cloud infrastructure (AWS, Azure).
+• Strong analytical and problem-solving skills, with the ability to work independently and collaboratively.
+• Excellent verbal and written communication skills; capable of conveying technical findings to technical and non-technical audiences.
+
+Required Qualifications:
+
+Education:
+• Bachelor's degree in Cybersecurity, Computer Science, Information Systems, or a related field (or equivalent experience).
+
+Experience:
+• Minimum of 6-8 years of relevant cybersecurity experience, with at least 5 years focused on threat hunting, threat intelligence, or incident response.
+
+Preferred Qualifications:
+
+Certifications:
+• GIAC Cyber Threat Intelligence (GCTI)
+• GIAC Certified Incident Handler (GCIH)
+• GIAC Advanced Threat Hunting (GATH)
+• Certified Threat Intelligence Analyst (CTIA)
+• OSCP or similar offensive security certifications
+
+All submissions should include a cover letter and resume.
+
+The University of Maryland Global Campus (UMGC) is an equal opportunity employer and complies with all applicable federal and state laws regarding nondiscrimination. UMGC is committed to a policy of equal opportunity for all persons and does not discriminate on the basis of race, color, national origin, age, marital status, sex, sexual orientation, gender identity, gender expression, disability, religion, ancestry, political affiliation or veteran status in employment, educational programs and activities, and admissions.
+
+Workplace Accommodations:
+
+The University of Maryland Global Campus Global Campus (UMGC) is committed to creating and maintaining a welcoming and inclusive working environment for people of all abilities. UMGC is dedicated to the principle that no qualified individual with a disability shall, based on disability, be excluded from participation in or be denied the benefits of the services, programs, or activities of the University, or be subjected to discrimination. For information about UMGC's Reasonable Workplace Accommodation Policy or to request an accommodation, applicants/candidates can contact Employee Accommodations via email at employee-accommodations@umgc.edu.
+
+Benefits Package Highlights:
+• Generous Time Off: Enjoy 22 days of paid vacation, 15 days of sick leave, 3 personal days, and 16 paid holidays (17 during general election years). For part-time employees, time off rates will be prorated based on the number of hours worked.
+• Comprehensive Health Coverage: Access to health care, medical with vision, dental, and prescription plans for both individuals and families, effective from the 1st of the month following your hire date.
+• Insurance Options: Term Life Insurance, Accidental Death and Dismemberment Insurance, and Long-Term Disability (LTD) Insurance. Part-time employees working less than 0.5 FTE are not eligible for LTD.
+• Flexible Spending Accounts: Available for medical and dependent care expenses.
+• Retirement Plans: Choose between the Optional Retirement Program (ORP) or the Maryland State Retirement and Pension System (MSRPS).
+• Supplemental Retirement Plans: include 401(k), 403(b), 457(b), and various Roth options. The university does not provide matching funds.
+• Tuition Remission: Immediate availability for Regular Exempt Staff. Spouses and dependent children are eligible for undergraduate tuition remission after two years of service. NOTE: For part-time employees (at least 50 percent of the time), tuition remission benefits are prorated.
+
+Hiring Range:
+$120,000.00 - $135,000.00

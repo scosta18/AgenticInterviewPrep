@@ -12,6 +12,32 @@ export default function Interview({ sessionData, onComplete }) {
   const [transcribing, setTranscribing] = useState(false)
   const mediaRecorderRef = useRef(null)
   const chunksRef = useRef([])
+  const [timeLeft, setTimeLeft] = useState(sessionData.time_limit || 0)
+  const [timerActive, setTimerActive] = useState(false)
+  const timerRef = useRef(null)
+
+  const startTimer = (seconds) => {
+    setTimeLeft(seconds)
+    setTimerActive(true)
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1){
+          clearInterval(timerRef.current)
+          setTimerActive(false)
+          return 0
+        } 
+        return prev - 1
+      })
+    }, 1000)
+  }
+
+const clearTimer = () => {
+  if (timerRef.current) {
+    clearInterval(timerRef.current)
+  }
+  setTimeLeft(null)
+  setTimerActive(false)
+}
 
   useEffect(() => {
     const raw = sessionData.questions_raw || ''
@@ -26,11 +52,7 @@ export default function Interview({ sessionData, onComplete }) {
     setQuestions(parsed.length ? parsed : [raw])
   }, [sessionData])
 
-  useEffect(() => {
-    if (questions.length > 0 && questions[current]) {
-      speakQuestion(questions[current])
-    }
-  }, [current, questions])
+
 
   const speakQuestion = async (text) => {
     try {
@@ -42,6 +64,16 @@ export default function Interview({ sessionData, onComplete }) {
       console.error('Speech failed:', err)
     }
   }
+
+  useEffect(() => {
+    if (questions.length > 0 && questions[current]) {
+      clearTimer()
+      speakQuestion(questions[current]).then(() => {
+        startTimer(120)
+      })
+    }
+  }, [current, questions])
+
 
   const startRecording = async () => {
     try {
@@ -89,8 +121,11 @@ export default function Interview({ sessionData, onComplete }) {
     }
   }
 
+
+
   const handleSubmit = async () => {
     if (!answer.trim()) return
+    clearTimer()
     setLoading(true)
     try {
       const res = await submitAnswer({
@@ -110,6 +145,7 @@ export default function Interview({ sessionData, onComplete }) {
   }
 
   const handleNext = () => {
+    clearTimer()
     if (current + 1 >= questions.length) {
       handleComplete()
     } else {
@@ -139,11 +175,24 @@ export default function Interview({ sessionData, onComplete }) {
         <span className="text-sm text-slate-400">
           Question {current + 1} of {questions.length}
         </span>
-        {avgScore !== null && (
-          <span className="text-sm text-purple-400 font-mono">
-            Avg score: {avgScore}/10
-          </span>
-        )}
+        <div className="flex items-center gap-4">
+          {timeLeft !== null && (
+            <span className={`text-sm font-mono font-bold ${
+              timeLeft <= 30
+                ? 'text-red-400 animate-pulse'
+                : timeLeft <= 60
+                ? 'text-yellow-400'
+                : 'text-green-400'
+            }`}>
+              ⏱ {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+            </span>
+          )}
+          {avgScore !== null && (
+            <span className="text-sm text-purple-400 font-mono">
+              Avg: {avgScore}/10
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="w-full bg-dark-700 rounded-full h-1.5">

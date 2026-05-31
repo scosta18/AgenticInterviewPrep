@@ -75,8 +75,8 @@ Settings are controlled via environment variables or a `.env` file in the projec
 │   ├── agents/
 │   │   ├── question_generator.py  # LLM-powered question generation
 │   │   ├── feedback_engine.py     # LLM-powered answer scoring
-│   │   ├── scrapper.py            # Google + Reddit scraping
-│   │   └── voice.py               # Voice utilities
+│   │   ├── voice.py               # Voice utilities
+│   │   └── scrapper.py            # HackerNews + Remotive scraping
 │   ├── core/
 │   │   ├── config.py              # Settings (pydantic-settings)
 │   │   ├── database.py            # SQLite session management
