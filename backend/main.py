@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from core.database import init_db
 from routers.interview import router as interview_router
 from routers.session import router as session_router
+from dotenv import load_dotenv
+load_dotenv()
 
 app = FastAPI(
     title = "Agentic Interview Prep",

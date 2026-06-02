@@ -1,17 +1,28 @@
-from fastapi import FastAPI, HTTPException
-from fastapi import APIRouter
+# from fastapi import APIRouter, HTTPException, UploadFile, File
+# from fastapi.responses import StreamingResponse
+# from pydantic import BaseModel
+# from core.database import create_session, save_question, complete_session, get_session_results
+# from core.vector_store import store_job_context
+# from agents.scrapper import run_research
+# from agents.question_generator import generate_questions
+# from agents.feedback_engine import get_feedback
+# from deepgram import DeepgramClient
+# from deepgram import DeepgramClient, PrerecordedOptions
+# from deepgram.clients.speak import SpeakOptions
+# from deepgram import DeepgramClient
+# from deepgram.transcription import PrerecordedOptions
+# import os
+# import io
+from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from core.database import create_session, save_question, complete_session, get_session_results
 from core.vector_store import store_job_context
 from agents.scrapper import run_research
 from agents.question_generator import generate_questions
 from agents.feedback_engine import get_feedback
-from fastapi import APIRouter, HTTPException, UploadFile, File
-import tempfile
+from deepgram import DeepgramClient
 import os
-import whisper
-import edge_tts
-from fastapi.responses import StreamingResponse
 import io
 
 router = APIRouter(prefix="/interview", tags=["Interview"])
@@ -32,13 +43,10 @@ class AnswerRequest(BaseModel):
     
 @router.post("/start")
 async def start_session(request: StartSessionRequest):
-    """Start a new interview session"""
     try:
-        # Create session in DB
         session_id = create_session(request.company_name, request.role)
         print(f"Session created: {session_id}")
 
-        # Store job context in vector DB
         store_job_context(
             session_id,
             request.job_description,
@@ -46,7 +54,6 @@ async def start_session(request: StartSessionRequest):
         )
         print(f"Job context stored")
 
-        # Scrape web for real interview data
         research_summary = await run_research(
             session_id,
             request.company_name,
@@ -54,7 +61,6 @@ async def start_session(request: StartSessionRequest):
         )
         print(f"Research done: {research_summary}")
 
-        # Generate targeted questions
         questions_text = generate_questions(
             session_id,
             request.company_name,
@@ -75,6 +81,7 @@ async def start_session(request: StartSessionRequest):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
     
 @router.post("/answer")
 async def submit_answer(request: AnswerRequest):
@@ -119,45 +126,98 @@ async def finish_session(session_id: int):
     return {"status": "session completed"}
 
 
-whisper_model = whisper.load_model("base")
-@router.post("/transcribe")
-async def transcribe_audio(audio: UploadFile = File(...)):
-    """Transcribe audio file using Whisper"""
-    try:
-        with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as tmp:
-            content = await audio.read()
-            tmp.write(content)
-            tmp_path = tmp.name
+# whisper_model = whisper.load_model("base")
+# @router.post("/transcribe")
+# async def transcribe_audio(audio: UploadFile = File(...)):
+#     """Transcribe audio file using Whisper"""
+#     try:
+#         with tempfile.NamedTemporaryFile(suffix=".webm", delete=False) as tmp:
+#             content = await audio.read()
+#             tmp.write(content)
+#             tmp_path = tmp.name
             
-        result = whisper_model.transcribe(tmp_path, language="en")
-        os.unlink(tmp_path)
+#         result = whisper_model.transcribe(tmp_path, language="en")
+#         os.unlink(tmp_path)
         
-        return {"text": result["text"].strip()}
+#         return {"text": result["text"].strip()}
     
+#     except Exception as e:
+#         import traceback
+#         traceback.print_exc()
+#         raise HTTPException(status_code=500, detail=str(e))
+@router.post("/transcribe")
+async def trancribe_audio(audio: UploadFile = File(...)):
+    try:
+        api_key = os.getenv("DEEPGRAM_API_KEY", "62b99d38-8381-4259-aca7-6b602b493e12")
+        deepgram = DeepgramClient(api_key=api_key)
+
+        contents = await audio.read()
+
+        response = deepgram.listen.v1.media.transcribe_file(
+            request=contents,
+            model="nova-2",
+            language="en-US",
+            smart_format=True,
+            punctuate=True,
+        )
+
+        transcript = response.results.channels[0].alternatives[0].transcript
+        print(f"✅ Transcribed: {transcript}")
+        return {"text": transcript}
+
     except Exception as e:
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/deepgram-key")
+async def get_deepgram_key():
+    return {"key": os.getenv("DEEPGRAM_API_KEY", "")}
+        
     
-    
-    
+
+# async def speak_text(data: dict):
+#     """Convert text to speech using edge-tts"""
+#     try:
+#         text = data.get("text", "")
+#         communicate = edge_tts.Communicate(text, voice="en-US-GuyNeural")
+        
+#         audio_buffer = io.BytesIO()
+#         async for chunk in communicate.stream():
+#             if chunk["type"] == "audio":
+#                 audio_buffer.write(chunk["data"])
+        
+#         audio_buffer.seek(0)
+#         return StreamingResponse(
+#             audio_buffer,
+#             media_type="audio/mpeg"
+#         )
+#     except Exception as e:
+#         import traceback
+#         traceback.print_exc()
+#         raise HTTPException(status_code=500, detail=str(e))
 @router.post("/speak")
 async def speak_text(data: dict):
-    """Convert text to speech using edge-tts"""
     try:
+        api_key = os.getenv("DEEPGRAM_API_KEY", "62b99d38-8381-4259-aca7-6b602b493e12")
+        deepgram = DeepgramClient(api_key=api_key)
+
         text = data.get("text", "")
-        communicate = edge_tts.Communicate(text, voice="en-US-GuyNeural")
-        
+
         audio_buffer = io.BytesIO()
-        async for chunk in communicate.stream():
-            if chunk["type"] == "audio":
-                audio_buffer.write(chunk["data"])
-        
+        for chunk in deepgram.speak.v1.audio.generate(
+            text=text,
+            model="aura-2-thalia-en"
+        ):
+            audio_buffer.write(chunk)
+
         audio_buffer.seek(0)
+
         return StreamingResponse(
             audio_buffer,
             media_type="audio/mpeg"
         )
+
     except Exception as e:
         import traceback
         traceback.print_exc()

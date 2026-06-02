@@ -18,3 +18,5 @@ export const transcribeAudio = (formData) => api.post('/interview/transcribe', f
 export const speakText = (text) => api.post('/interview/speak', { text }, {
   responseType: 'blob'
 })
+
+export const getDeepgramKey = () => api.get('/interview/deepgram-key')

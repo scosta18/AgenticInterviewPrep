@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { submitAnswer, completeSession, transcribeAudio, speakText } from '../api/client'
+import { submitAnswer, completeSession, transcribeAudio, speakText, getDeepgramKey } from '../api/client'
 
 export default function Interview({ sessionData, onComplete }) {
   const [questions, setQuestions] = useState([])
@@ -15,6 +15,9 @@ export default function Interview({ sessionData, onComplete }) {
   const [timeLeft, setTimeLeft] = useState(sessionData.time_limit || 0)
   const [timerActive, setTimerActive] = useState(false)
   const timerRef = useRef(null)
+  const [liveTranscript, setLiveTranscript] = useState('')
+  const streamIntervalRef = useRef(null)
+  const deepgramSocketRef = useRef(null)
 
   const startTimer = (seconds) => {
     setTimeLeft(seconds)
@@ -65,6 +68,46 @@ const clearTimer = () => {
     }
   }
 
+  const startRealtimeTranscription = async () => {
+  const keyRes = await getDeepgramKey()
+  const apiKey = keyRes.data.key
+
+  const socket = new WebSocket(
+    `wss://api.deepgram.com/v1/listen?model=nova-2&language=en-US&smart_format=true&interim_results=true`,
+    ['token', apiKey]
+  )
+  // rest stays the same
+
+  socket.onopen = () => {
+    console.log('Deepgram WebSocket connected')
+    mediaRecorderRef.current.addEventListener('dataavailable', (e) => {
+      if (e.data.size > 0 && socket.readyState === WebSocket.OPEN) {
+        socket.send(e.data)
+      }
+    })
+  }
+
+  socket.onmessage = (e) => {
+    const data = JSON.parse(e.data)
+    const transcript = data?.channel?.alternatives?.[0]?.transcript
+    const isFinal = data?.is_final
+
+    if (transcript) {
+      if (isFinal) {
+        setAnswer(prev => prev ? prev + ' ' + transcript : transcript)
+        setLiveTranscript('')
+      } else {
+        setLiveTranscript(transcript)
+      }
+    }
+  }
+
+  socket.onerror = (e) => console.error('Deepgram WS error:', e)
+  socket.onclose = () => console.log('Deepgram WS closed')
+
+  return socket
+}
+
   useEffect(() => {
     if (questions.length > 0 && questions[current]) {
       clearTimer()
@@ -75,51 +118,98 @@ const clearTimer = () => {
   }, [current, questions])
 
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mediaRecorder = new MediaRecorder(stream)
-      mediaRecorderRef.current = mediaRecorder
-      chunksRef.current = []
+const startRecording = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
+    mediaRecorderRef.current = mediaRecorder
+    chunksRef.current = []
+    setLiveTranscript('')
+    setAnswer('')
 
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data)
+    // Get key and open WebSocket
+    const keyRes = await getDeepgramKey()
+    const apiKey = keyRes.data.key
+
+    const socket = new WebSocket(
+      `wss://api.deepgram.com/v1/listen?model=nova-2&language=en-US&smart_format=true&interim_results=true`,
+      ['token', apiKey]
+    )
+    deepgramSocketRef.current = socket
+
+    socket.onmessage = (e) => {
+      const data = JSON.parse(e.data)
+      const transcript = data?.channel?.alternatives?.[0]?.transcript
+      const isFinal = data?.is_final
+      if (transcript) {
+        if (isFinal) {
+          setAnswer(prev => prev ? prev + ' ' + transcript : transcript)
+          setLiveTranscript('')
+        } else {
+          setLiveTranscript(transcript)
+        }
       }
+    }
 
-      mediaRecorder.onstop = async () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
-        await handleTranscribe(blob)
-        stream.getTracks().forEach(track => track.stop())
+    socket.onerror = (e) => console.error('Deepgram WS error:', e)
+    socket.onclose = () => console.log('Deepgram WS closed')
+
+    // Wait for socket to open before starting recorder
+    await new Promise((resolve, reject) => {
+      socket.onopen = () => {
+        console.log('✅ Deepgram WebSocket connected')
+        resolve()
       }
+      setTimeout(() => reject(new Error('WebSocket timeout')), 5000)
+    })
 
-      mediaRecorder.start()
-      setRecording(true)
-    } catch (err) {
-      alert('Microphone access denied. Please allow mic access and try again.')
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) {
+        chunksRef.current.push(e.data)
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.send(e.data)
+        }
+      }
     }
-  }
 
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && recording) {
-      mediaRecorderRef.current.stop()
-      setRecording(false)
+    mediaRecorder.onstop = () => {
+      if (deepgramSocketRef.current) {
+        deepgramSocketRef.current.close()
+      }
+      setLiveTranscript('')
+      stream.getTracks().forEach(track => track.stop())
     }
-  }
 
-  const handleTranscribe = async (blob) => {
-    setTranscribing(true)
-    try {
-      const formData = new FormData()
-      formData.append('audio', blob, 'answer.webm')
-      const res = await transcribeAudio(formData)
-      setAnswer(prev => prev ? prev + ' ' + res.data.text : res.data.text)
-    } catch (err) {
-      console.error('Transcription failed:', err)
-      alert('Transcription failed. Try typing your answer instead.')
-    } finally {
-      setTranscribing(false)
-    }
+    mediaRecorder.start(250)
+    setRecording(true)
+
+  } catch (err) {
+    console.error('Recording error:', err)
+    alert('Could not start recording: ' + err.message)
   }
+}
+
+const stopRecording = () => {
+  if (mediaRecorderRef.current && recording) {
+    mediaRecorderRef.current.stop()
+    setRecording(false)
+  }
+}
+
+  // const handleTranscribe = async (blob) => {
+  //   setTranscribing(true)
+  //   try {
+  //     const formData = new FormData()
+  //     formData.append('audio', blob, 'answer.webm')
+  //     const res = await transcribeAudio(formData)
+  //     setAnswer(prev => prev ? prev + ' ' + res.data.text : res.data.text)
+  //   } catch (err) {
+  //     console.error('Transcription failed:', err)
+  //     alert('Transcription failed. Try typing your answer instead.')
+  //   } finally {
+  //     setTranscribing(false)
+  //   }
+  // }
 
 
 
@@ -257,9 +347,17 @@ const clearTimer = () => {
           </div>
 
           {recording && (
-            <p className="text-red-400 text-sm text-center animate-pulse">
-              🔴 Recording... click the button again to stop
-            </p>
+            <div className="space-y-2">
+              <p className="text-red-400 text-sm text-center animate-pulse">
+                🔴 Recording... click the button again to stop
+              </p>
+              {liveTranscript && (
+                <div className="bg-dark-600 border border-dark-500 rounded-lg px-4 py-3">
+                  <p className="text-xs text-slate-500 mb-1">Live transcript</p>
+                  <p className="text-slate-300 text-sm italic">{liveTranscript}</p>
+                </div>
+              )}
+            </div>
           )}
 
           {transcribing && (
