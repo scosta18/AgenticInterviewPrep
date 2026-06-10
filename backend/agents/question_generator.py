@@ -1,16 +1,31 @@
-from langchain_community.llms import Ollama
-from langchain_core.prompts import PromptTemplate
+from groq import Groq
 from core.config import get_settings
 from core.vector_store import get_relevant_context
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 settings = get_settings()
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-llm = Ollama(model=settings.model_name)
+def generate_questions(
+    session_id: int,
+    company_name: str,
+    role: str,
+    job_description: str,
+    num_questions: int = 5
+) -> str:
 
-question_prompt = PromptTemplate(
-    input_variables=["company", "role", "context", "job_description", "num_questions"],
-    template="""
-You are an expert interview coach preparing a candidate for a {role} role at {company}.
+    context = get_relevant_context(
+        session_id,
+        query=f"{role} interview questions {company_name}",
+        n_results=3
+    )
+
+    if not context:
+        context = "No additional context available. Use job description only."
+
+    prompt = f"""You are an expert interview coach preparing a candidate for a {role} role at {company_name}.
 
 Here is relevant context gathered from real interview experiences and research:
 {context}
@@ -26,31 +41,14 @@ Format each question as:
 1. [Question]
 Why: [Reason]
 """
-)
 
-def generate_questions(
-    session_id: int,
-    company_name: str,
-    role: str,
-    job_description: str,
-    num_questions: int = 5
-) -> str:
-    context = get_relevant_context(
-        session_id,
-        query=f"{role} interview questions {company_name}",
-        n_results=3
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[
+            {"role": "user", "content": prompt}
+        ],
+        max_tokens=2000,
+        temperature=0.7
     )
 
-    if not context:
-        context = "No additional context available. Use job description only."
-
-    chain = question_prompt | llm
-    result = chain.invoke({
-        "company": company_name,
-        "role": role,
-        "context": context,
-        "job_description": job_description,
-        "num_questions": num_questions
-    })
-
-    return result
+    return response.choices[0].message.content

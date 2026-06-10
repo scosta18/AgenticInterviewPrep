@@ -148,7 +148,7 @@ async def finish_session(session_id: int):
 @router.post("/transcribe")
 async def trancribe_audio(audio: UploadFile = File(...)):
     try:
-        api_key = os.getenv("DEEPGRAM_API_KEY", "62b99d38-8381-4259-aca7-6b602b493e12")
+        api_key = os.getenv("DEEPGRAM_API_KEY")
         deepgram = DeepgramClient(api_key=api_key)
 
         contents = await audio.read()
@@ -199,7 +199,7 @@ async def get_deepgram_key():
 @router.post("/speak")
 async def speak_text(data: dict):
     try:
-        api_key = os.getenv("DEEPGRAM_API_KEY", "62b99d38-8381-4259-aca7-6b602b493e12")
+        api_key = os.getenv("DEEPGRAM_API_KEY")
         deepgram = DeepgramClient(api_key=api_key)
 
         text = data.get("text", "")
@@ -222,3 +222,30 @@ async def speak_text(data: dict):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+    
+@router.post("/prefetch-speak")
+async def prefetch_speak(data: dict):
+    """Pre-generate TTS audio for next question"""
+    try:
+        api_key = os.getenv("DEEPGRAM_API_KEY")
+        deepgram = DeepgramClient(api_key=api_key)
+        text = data.get("text", "")
+        if not text:
+            return {"status": "skipped"}
+        
+        audio_buffer = io.BytesIO()
+        for chunk in deepgram.speak.v1.audio.generate(
+            text=text,
+            model="aura-2-thalia-en"
+        ):
+            audio_buffer.write(chunk)
+            
+        audio_buffer.seek(0)
+        audio_bytes = audio_buffer.read()
+        
+        import base64
+        audio_b64 = base64.b64encode(audio_bytes).decode("utf-8")
+        return {"audio_b64": audio_b64, "status": "ready"}
+    
+    except Exception as e:
+        return {"status": "error", "detail": str(e)} 

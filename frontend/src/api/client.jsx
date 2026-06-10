@@ -20,3 +20,4 @@ export const speakText = (text) => api.post('/interview/speak', { text }, {
 })
 
 export const getDeepgramKey = () => api.get('/interview/deepgram-key')
+export const prefetchSpeak = (text) => api.post('/interview/prefetch-speak',{text})

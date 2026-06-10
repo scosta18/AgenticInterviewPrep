@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { submitAnswer, completeSession, speakText, getDeepgramKey } from '../api/client'
+import { submitAnswer, completeSession, speakText, getDeepgramKey, prefetchSpeak } from '../api/client'
 
 export default function Interview({ sessionData, onComplete }) {
   const [questions, setQuestions] = useState([])
@@ -19,6 +19,7 @@ export default function Interview({ sessionData, onComplete }) {
   const answerRef = useRef('')
   const feedbackRef = useRef(null)
   const loadingRef = useRef(false)
+  const prefetchedAudioRef = useRef(null)
 
   // Parse questions
   useEffect(() => {
@@ -97,12 +98,35 @@ export default function Interview({ sessionData, onComplete }) {
 
   const speakQuestion = async (text) => {
     try {
+      // Use pre-fetched audio if available
+      if (prefetchedAudioRef.current) {
+        const audioBytes = Uint8Array.from(atob(prefetchedAudioRef.current), c => c.charCodeAt(0))
+        const blob = new Blob([audioBytes], { type: 'audio/mpeg' })
+        const url = URL.createObjectURL(blob)
+        const audio = new Audio(url)
+        audio.play()
+        prefetchedAudioRef.current = null
+        return
+      }
+
+      // Fallback to normal fetch
       const res = await speakText(text)
       const url = URL.createObjectURL(res.data)
       const audio = new Audio(url)
       audio.play()
     } catch (err) {
       console.error('Speech failed:', err)
+    }
+  }
+
+  const prefetchNextQuestion = async (text) => {
+    if (index >= questions.length) return
+    try {
+      const res = await prefetchSpeak(question[index])
+      prefetchedAudioRed.current = URL.createObjectURL(res.data)
+      console.log('Prefetched audio for next question')
+    } catch (err) {
+      console.error('Prefetch failed:', err)
     }
   }
 
@@ -179,28 +203,35 @@ export default function Interview({ sessionData, onComplete }) {
   }
 
   const handleSubmitWithAnswer = async (answerText) => {
-    if (!answerText.trim()) return
-    clearTimerFn()
-    loadingRef.current = true
-    setLoading(true)
-    try {
-      const res = await submitAnswer({
-        session_id: sessionData.session_id,
-        question: questions[current],
-        answer: answerText,
-        company_name: 'the company',
-        role: 'the role'
-      })
-      feedbackRef.current = res.data
-      setFeedback(res.data)
-      setScores(prev => [...prev, res.data.score])
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoading(false)
-      loadingRef.current = false
+  if (!answerText.trim()) return
+  clearTimerFn()
+  loadingRef.current = true
+  setLoading(true)
+  try {
+    const res = await submitAnswer({
+      session_id: sessionData.session_id,
+      question: questions[current],
+      answer: answerText,
+      company_name: 'the company',
+      role: 'the role'
+    })
+    feedbackRef.current = res.data
+    setFeedback(res.data)
+    setScores(prev => [...prev, res.data.score])
+
+    // Pre-fetch next question audio in background
+    const nextIndex = current + 1
+    if (nextIndex < questions.length) {
+      prefetchNextQuestion(nextIndex)
     }
+
+  } catch (err) {
+    console.error(err)
+  } finally {
+    setLoading(false)
+    loadingRef.current = false
   }
+}
 
   const handleSubmit = async () => {
     await handleSubmitWithAnswer(answer)
