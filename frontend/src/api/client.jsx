@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000',
+  baseURL: 'https://scosta18-agentic-interview-prep-backend.hf.space',
   headers: {
     'Content-Type': 'application/json'
   }
