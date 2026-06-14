@@ -1,3 +1,16 @@
+---
+title: Agentic Interview Prep Backend
+emoji: 🎤
+colorFrom: purple
+colorTo: blue
+sdk: docker
+pinned: false
+---
+
+# Agentic Interview Prep — Backend
+
+FastAPI backend for the Agentic Interview Prep AI.
+
 # Agentic Interview Prep AI
 
 A full-stack voice-powered interview preparation platform built with agentic AI. 

@@ -55,7 +55,7 @@ export default function Setup({ onSessionStart }) {
             name="company_name"
             value={form.company_name}
             onChange={handleChange}
-            placeholder="e.g. Lumiture"
+            placeholder="e.g. Apolo"
             className="w-full bg-dark-700 border border-dark-600 rounded-lg px-4 py-2.5 text-white placeholder-slate-600 focus:outline-none focus:border-purple-500 transition-colors"
           />
         </div>
