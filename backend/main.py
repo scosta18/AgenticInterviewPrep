@@ -4,6 +4,8 @@ from core.database import init_db
 from routers.interview import router as interview_router
 from routers.session import router as session_router
 from dotenv import load_dotenv
+from routers.coding import router as coding_router
+
 load_dotenv()
 
 app = FastAPI(
@@ -31,6 +33,7 @@ async def startup():
 #Register routers
 app.include_router(interview_router)
 app.include_router(session_router)
+app.include_router(coding_router)
 
 @app.get("/")
 async def root():
