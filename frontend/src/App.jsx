@@ -3,6 +3,7 @@ import Setup from './components/Setup'
 import Interview from './components/Interview'
 import History from './components/History'
 import Dashboard from './components/Dashboard'
+import CodingInterview from './components/CodingInterview'
 
 export default function App() {
   const [screen, setScreen] = useState('setup')
@@ -24,7 +25,7 @@ export default function App() {
           <span className="font-semibold text-white">Interview Prep AI</span>
         </div>
         <nav className="flex gap-2">
-          {['setup', 'dashboard', 'history'].map(s => (
+          {['setup', 'coding', 'dashboard', 'history'].map(s => (
             <button
               key={s}
               onClick={() => setScreen(s)}
@@ -45,6 +46,7 @@ export default function App() {
         {screen === 'interview' && sessionData && (
           <Interview sessionData={sessionData} onComplete={() => setScreen('dashboard')} />
         )}
+        {screen === 'coding' && <CodingInterview />}
         {screen === 'dashboard' && <Dashboard />}
         {screen === 'history' && <History />}
       </main>

@@ -16,6 +16,7 @@ async def get_session_detail(session_id: int):
     """Get detailed results for a specific session"""
     return get_session_results(session_id)
 
+
 @router.get("/{session_id}/report")
 async def download_report(session_id: int):
     """Generate and download PDF report for a session"""

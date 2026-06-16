@@ -1,10 +1,15 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from agents.coding_interview import generate_problem, execute_code, review_code
+from core.database import create_session, save_coding_question, get_coding_session_results
+import json
 
 router = APIRouter(prefix="/coding", tags=["Coding Interview"])
 
-
+class StartCodingSessionRequest(BaseModel):
+    role: str = "the role"
+    company_name: str = "the company"
+    
 class GenerateProblemRequest(BaseModel):
     role: str = "the role"
     company_name: str = "the company"
@@ -26,6 +31,20 @@ class ReviewRequest(BaseModel):
     execution_result: dict = {}
     transcript: str = ""
 
+@router.post("/session/start")
+async def start_coding_session(request: StartCodingSessionRequest):
+    "Create new coding session, return session ID."
+    try:
+        session_id = create_session(
+            request.company_name,
+            request.role,
+            session_type="coding"
+        )
+        return {"session_id": session_id, "status": "ready"}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/problem")
 async def create_problem(request: GenerateProblemRequest):
@@ -72,7 +91,29 @@ async def review_submission(request: ReviewRequest):
             execution_result=request.execution_result,
             transcript=request.transcript,
         )
+        
+        save_coding_question(
+            session_id=1,
+            problem_title=request.problem_title,
+            problem_description=request.problem_description,
+            difficulty="medium",
+            language=request.language,
+            code=request.code,
+            execution_result=json.dumps(request.execution_result),
+            score=score,
+            feedback=feedback_text,            
+        )
         return {"feedback": feedback_text, "score": score, "status": "reviewed"}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.get("/session/{session_id}")
+async def get_coding_session(session_id: int):
+    
+    try:
+        return get_coding_session_results(session_id)
     except Exception as e:
         import traceback
         traceback.print_exc()

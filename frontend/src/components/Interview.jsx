@@ -265,6 +265,7 @@ export default function Interview({ sessionData, onComplete }) {
     ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
     : null
 
+
   return (
     <div className="space-y-6">
       {/* Progress */}
