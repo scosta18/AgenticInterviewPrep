@@ -26,3 +26,5 @@ export const prefetchSpeak = (text) => api.post('/interview/prefetch-speak',{tex
 export const generateProblem = (data) => api.post('/coding/problem', data)
 export const executeCode = (data) => api.post('/coding/execute', data)
 export const reviewCode = (data) => api.post('/coding/review', data)
+export const startCodingSession = (data) => api.post('/coding/session/start', data)
+export const getCodingSession = (id) => api.get(`/coding/session/${id}`)

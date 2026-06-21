@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import Editor from '@monaco-editor/react'
-import { generateProblem, reviewCode, speakText } from '../api/client'
+import { generateProblem, reviewCode, speakText, startCodingSession } from '../api/client'
 
 const LANGUAGES = ['python', 'javascript', 'java', 'cpp']
 const DIFFICULTIES = ['easy', 'medium', 'hard']
+
 
 const STARTERS = {
   python: '# Write your solution here\ndef solution():\n    pass\n',
@@ -36,6 +37,7 @@ export default function CodingInterview() {
   const [review, setReview] = useState(null)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState('')
+  const [sessionId, setSessionId] = useState(null)
 
   // Speak problem when it loads
   useEffect(() => {
@@ -65,6 +67,8 @@ export default function CodingInterview() {
     setReview(null)
     setCode(STARTERS[language])
     try {
+      const sessionRes = await startCodingSession({ role, company_name: 'Interview' })
+      setSessionId(sessionRes.data.session_id)
       const res = await generateProblem({ role, difficulty })
       setProblem(res.data.problem)
       setCode(getStarterCode(language, res.data.problem))
@@ -82,11 +86,13 @@ export default function CodingInterview() {
     setReview(null)
     try {
       const res = await reviewCode({
-        problem_title: problem.title,
-        problem_description: problem.description,
-        code,
-        language,
-      })
+      session_id: sessionId,
+      problem_title: problem.title,
+      problem_description: problem.description,
+      difficulty: problem.difficulty,
+      code,
+      language,
+    })
       setReview(res.data)
     } catch (err) {
       setError('Review failed.')
@@ -97,11 +103,12 @@ export default function CodingInterview() {
   }
 
   const handleReset = () => {
-    setProblem(null)
-    setReview(null)
-    setCode(STARTERS[language])
-    setError('')
-  }
+  setProblem(null)
+  setReview(null)
+  setSessionId(null)
+  setCode(STARTERS[language])
+  setError('')
+}
 
   return (
     <div className="space-y-6">
