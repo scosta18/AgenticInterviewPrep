@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import Editor from '@monaco-editor/react'
-import { generateProblem, executeCode, reviewCode, speakText } from '../api/client'
+import { generateProblem, reviewCode, speakText } from '../api/client'
 
 const LANGUAGES = ['python', 'javascript', 'java', 'cpp']
 const DIFFICULTIES = ['easy', 'medium', 'hard']
@@ -12,14 +12,26 @@ const STARTERS = {
   cpp: '// Write your solution here\n#include <iostream>\nusing namespace std;\n\nint main() {\n\n    return 0;\n}\n',
 }
 
+const getStarterCode = (lang, problem) => {
+  const signature = problem?.function_signature?.[lang]
+  if (signature) {
+    if (lang === 'python') {
+      return `${signature}\n    pass\n`
+    }
+    if (lang === 'javascript' || lang === 'java' || lang === 'cpp') {
+      return `${signature.replace(/\{\s*\}/, '{\n    \n}')}\n`
+    }
+    return `${signature}\n`
+  }
+  return STARTERS[lang]
+}
+
 export default function CodingInterview() {
   const [role, setRole] = useState('')
   const [difficulty, setDifficulty] = useState('medium')
   const [language, setLanguage] = useState('python')
   const [problem, setProblem] = useState(null)
   const [code, setCode] = useState(STARTERS.python)
-  const [executing, setExecuting] = useState(false)
-  const [executionResult, setExecutionResult] = useState(null)
   const [reviewing, setReviewing] = useState(false)
   const [review, setReview] = useState(null)
   const [generating, setGenerating] = useState(false)
@@ -50,12 +62,9 @@ export default function CodingInterview() {
     setError('')
     setGenerating(true)
     setProblem(null)
-    setExecutionResult(null)
     setReview(null)
     setCode(STARTERS[language])
-    
     try {
-      console.log("Before the try block")
       const res = await generateProblem({ role, difficulty })
       setProblem(res.data.problem)
       setCode(getStarterCode(language, res.data.problem))
@@ -67,35 +76,6 @@ export default function CodingInterview() {
     }
   }
 
-  const handleExecute = async () => {
-    setExecuting(true)
-    setExecutionResult(null)
-    try {
-      const res = await executeCode({ code, language })
-      setExecutionResult(res.data)
-    } catch (err) {
-      setExecutionResult({ success: false, error: 'Execution failed.' })
-      console.error(err)
-    } finally {
-      setExecuting(false)
-    }
-  }
-
-const getStarterCode = (lang, problem) => {
-  const signature = problem?.function_signature?.[lang]
-  if (signature) {
-    if (lang === 'python') {
-      return `${signature}\n    pass\n`
-    }
-    if (lang === 'javascript' || lang === 'java' || lang === 'cpp') {
-      // Expand "...) {}" into "...) {\n\n}" so there's a place to type
-      return `${signature.replace(/\{\s*\}/, '{\n    \n}')}\n`
-    }
-    return `${signature}\n`
-  }
-  return STARTERS[lang]
-}
-
   const handleReview = async () => {
     if (!problem) return
     setReviewing(true)
@@ -106,7 +86,6 @@ const getStarterCode = (lang, problem) => {
         problem_description: problem.description,
         code,
         language,
-        execution_result: executionResult || {},
       })
       setReview(res.data)
     } catch (err) {
@@ -119,7 +98,6 @@ const getStarterCode = (lang, problem) => {
 
   const handleReset = () => {
     setProblem(null)
-    setExecutionResult(null)
     setReview(null)
     setCode(STARTERS[language])
     setError('')
@@ -130,7 +108,7 @@ const getStarterCode = (lang, problem) => {
       <div>
         <h1 className="text-2xl font-bold text-white">Coding Interview</h1>
         <p className="text-slate-400 mt-1 text-sm">
-          AI generates a role-targeted problem — write your solution, run it, get scored feedback.
+          AI generates a role-targeted problem — write your solution and get scored feedback on your thinking.
         </p>
       </div>
 
@@ -290,15 +268,8 @@ const getStarterCode = (lang, problem) => {
           {/* Actions */}
           <div className="flex gap-3">
             <button
-              onClick={handleExecute}
-              disabled={executing || reviewing}
-              className="flex-1 bg-dark-700 hover:bg-dark-600 disabled:bg-dark-800 disabled:text-slate-600 border border-dark-600 text-white font-medium py-2.5 rounded-lg transition-colors text-sm"
-            >
-              {executing ? '⏳ Running...' : '▶ Run Code'}
-            </button>
-            <button
               onClick={handleReview}
-              disabled={reviewing || executing}
+              disabled={reviewing}
               className="flex-1 bg-purple-600 hover:bg-purple-500 disabled:bg-dark-600 disabled:text-slate-500 text-white font-medium py-2.5 rounded-lg transition-colors text-sm"
             >
               {reviewing ? '⏳ Reviewing...' : '🧠 Submit for Review'}
@@ -310,26 +281,6 @@ const getStarterCode = (lang, problem) => {
               New Problem
             </button>
           </div>
-
-          {/* Execution result */}
-          {executionResult && (
-            <div className={`bg-dark-700 border rounded-xl p-4 ${
-              executionResult.success ? 'border-green-500/30' : 'border-red-500/30'
-            }`}>
-              <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">
-                {executionResult.success ? '✅ Execution Result' : '❌ Execution Failed'}
-              </p>
-              {executionResult.stdout && (
-                <pre className="text-green-400 font-mono text-xs whitespace-pre-wrap">{executionResult.stdout}</pre>
-              )}
-              {executionResult.stderr && (
-                <pre className="text-red-400 font-mono text-xs whitespace-pre-wrap">{executionResult.stderr}</pre>
-              )}
-              {executionResult.error && (
-                <p className="text-red-400 text-xs font-mono">{executionResult.error}</p>
-              )}
-            </div>
-          )}
 
           {/* Review */}
           {review && (
