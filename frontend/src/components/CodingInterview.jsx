@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Editor from '@monaco-editor/react'
-import { generateProblem, reviewCode, speakText, startCodingSession } from '../api/client'
+import { generateProblem, reviewCode, speakText, getDeepgramKey, getHint, startCodingSession } from '../api/client'
 
 const LANGUAGES = ['python', 'javascript', 'java', 'cpp']
 const DIFFICULTIES = ['easy', 'medium', 'hard']
-
 
 const STARTERS = {
   python: '# Write your solution here\ndef solution():\n    pass\n',
@@ -16,9 +15,7 @@ const STARTERS = {
 const getStarterCode = (lang, problem) => {
   const signature = problem?.function_signature?.[lang]
   if (signature) {
-    if (lang === 'python') {
-      return `${signature}\n    pass\n`
-    }
+    if (lang === 'python') return `${signature}\n    pass\n`
     if (lang === 'javascript' || lang === 'java' || lang === 'cpp') {
       return `${signature.replace(/\{\s*\}/, '{\n    \n}')}\n`
     }
@@ -27,29 +24,68 @@ const getStarterCode = (lang, problem) => {
   return STARTERS[lang]
 }
 
+// Commands the voice listener watches for
+const COMMANDS = {
+  hint: ['hint', 'give me a hint', 'i need a hint', 'help me'],
+  submit: ['submit', 'done', 'i am done', "i'm done", 'submit for review'],
+  repeat: ['repeat', 'repeat the problem', 'read the problem'],
+  reset: ['new problem', 'next problem', 'reset'],
+}
+
+const detectCommand = (transcript) => {
+  const lower = transcript.toLowerCase().trim()
+  for (const [command, phrases] of Object.entries(COMMANDS)) {
+    if (phrases.some(p => lower.includes(p))) return command
+  }
+  return null
+}
+
 export default function CodingInterview() {
   const [role, setRole] = useState('')
   const [difficulty, setDifficulty] = useState('medium')
   const [language, setLanguage] = useState('python')
   const [problem, setProblem] = useState(null)
   const [code, setCode] = useState(STARTERS.python)
+  const [sessionId, setSessionId] = useState(null)
   const [reviewing, setReviewing] = useState(false)
   const [review, setReview] = useState(null)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState('')
-  const [sessionId, setSessionId] = useState(null)
+
+  // Voice state
+  const [listening, setListening] = useState(false)
+  const [liveTranscript, setLiveTranscript] = useState('')
+  const [voiceStatus, setVoiceStatus] = useState('')
+  const [hinting, setHinting] = useState(false)
+
+  const mediaRecorderRef = useRef(null)
+  const deepgramSocketRef = useRef(null)
+  const codeRef = useRef(code)
+  const problemRef = useRef(problem)
+  const reviewingRef = useRef(reviewing)
+  const commandCooldownRef = useRef(false)
+
+  // Keep refs in sync
+  useEffect(() => { codeRef.current = code }, [code])
+  useEffect(() => { problemRef.current = problem }, [problem])
+  useEffect(() => { reviewingRef.current = reviewing }, [reviewing])
 
   // Speak problem when it loads
   useEffect(() => {
     if (problem?.description) {
-      speakText(`Here is your coding problem: ${problem.title}. ${problem.description}`)
-        .then(res => {
-          const url = URL.createObjectURL(res.data)
-          new Audio(url).play()
-        })
-        .catch(console.error)
+      speakTextAloud(`Here is your coding problem: ${problem.title}. ${problem.description}`)
     }
   }, [problem])
+
+  const speakTextAloud = async (text) => {
+    try {
+      const res = await speakText(text)
+      const url = URL.createObjectURL(res.data)
+      new Audio(url).play()
+    } catch (err) {
+      console.error('TTS failed:', err)
+    }
+  }
 
   const handleLanguageChange = (lang) => {
     setLanguage(lang)
@@ -81,18 +117,18 @@ export default function CodingInterview() {
   }
 
   const handleReview = async () => {
-    if (!problem) return
+    if (!problemRef.current || reviewingRef.current) return
     setReviewing(true)
     setReview(null)
     try {
       const res = await reviewCode({
-      session_id: sessionId,
-      problem_title: problem.title,
-      problem_description: problem.description,
-      difficulty: problem.difficulty,
-      code,
-      language,
-    })
+        session_id: sessionId,
+        problem_title: problemRef.current.title,
+        problem_description: problemRef.current.description,
+        difficulty: problemRef.current.difficulty,
+        code: codeRef.current,
+        language,
+      })
       setReview(res.data)
     } catch (err) {
       setError('Review failed.')
@@ -102,13 +138,124 @@ export default function CodingInterview() {
     }
   }
 
+  const handleHint = async () => {
+    if (!problemRef.current || hinting) return
+    setHinting(true)
+    setVoiceStatus('Getting hint...')
+    try {
+      const res = await getHint({
+        problem_title: problemRef.current.title,
+        problem_description: problemRef.current.description,
+        code: codeRef.current,
+        language,
+      })
+      const hint = res.data.hint
+      setVoiceStatus(`💡 Hint: ${hint}`)
+      await speakTextAloud(hint)
+    } catch (err) {
+      setVoiceStatus('Hint failed.')
+      console.error(err)
+    } finally {
+      setHinting(false)
+    }
+  }
+
   const handleReset = () => {
-  setProblem(null)
-  setReview(null)
-  setSessionId(null)
-  setCode(STARTERS[language])
-  setError('')
-}
+    setProblem(null)
+    setReview(null)
+    setSessionId(null)
+    setCode(STARTERS[language])
+    setError('')
+    setVoiceStatus('')
+    setLiveTranscript('')
+  }
+
+  // Voice command dispatcher
+  const dispatchCommand = (command) => {
+    if (commandCooldownRef.current) return
+    commandCooldownRef.current = true
+    setTimeout(() => { commandCooldownRef.current = false }, 2000)
+
+    setLiveTranscript('')
+    setVoiceStatus(`Command: ${command}`)
+
+    if (command === 'hint') handleHint()
+    if (command === 'submit') handleReview()
+    if (command === 'repeat' && problemRef.current) {
+      speakTextAloud(`${problemRef.current.title}. ${problemRef.current.description}`)
+    }
+    if (command === 'reset') handleReset()
+  }
+
+  const startListening = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
+      mediaRecorderRef.current = mediaRecorder
+
+      const keyRes = await getDeepgramKey()
+      const apiKey = keyRes.data.key
+
+      const socket = new WebSocket(
+        `wss://api.deepgram.com/v1/listen?model=nova-2&language=en-US&smart_format=true&interim_results=true`,
+        ['token', apiKey]
+      )
+      deepgramSocketRef.current = socket
+
+      socket.onmessage = (e) => {
+        const data = JSON.parse(e.data)
+        const transcript = data?.channel?.alternatives?.[0]?.transcript
+        const isFinal = data?.is_final
+
+        if (transcript) {
+          if (isFinal) {
+            const command = detectCommand(transcript)
+            if (command) {
+              dispatchCommand(command)
+            } else {
+              setLiveTranscript(transcript)
+            }
+          } else {
+            setLiveTranscript(transcript)
+          }
+        }
+      }
+
+      socket.onerror = (e) => console.error('Deepgram WS error:', e)
+      socket.onclose = () => setListening(false)
+
+      await new Promise((resolve, reject) => {
+        socket.onopen = resolve
+        setTimeout(() => reject(new Error('WebSocket timeout')), 5000)
+      })
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0 && socket.readyState === WebSocket.OPEN) {
+          socket.send(e.data)
+        }
+      }
+
+      mediaRecorder.onstop = () => {
+        if (deepgramSocketRef.current) deepgramSocketRef.current.close()
+        stream.getTracks().forEach(t => t.stop())
+        setLiveTranscript('')
+      }
+
+      mediaRecorder.start(250)
+      setListening(true)
+      setVoiceStatus('Listening for commands...')
+
+    } catch (err) {
+      console.error('Voice error:', err)
+      setVoiceStatus('Microphone access failed.')
+    }
+  }
+
+  const stopListening = () => {
+    if (mediaRecorderRef.current) mediaRecorderRef.current.stop()
+    setListening(false)
+    setVoiceStatus('')
+  }
 
   return (
     <div className="space-y-6">
@@ -137,17 +284,11 @@ export default function CodingInterview() {
               <label className="text-sm text-slate-400 block mb-2">Difficulty</label>
               <div className="flex gap-2">
                 {DIFFICULTIES.map(d => (
-                  <button
-                    key={d}
-                    onClick={() => setDifficulty(d)}
+                  <button key={d} onClick={() => setDifficulty(d)}
                     className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-colors capitalize ${
-                      difficulty === d
-                        ? 'bg-purple-600 border-purple-500 text-white'
-                        : 'bg-dark-900 border-dark-600 text-slate-400 hover:border-dark-500'
+                      difficulty === d ? 'bg-purple-600 border-purple-500 text-white' : 'bg-dark-900 border-dark-600 text-slate-400 hover:border-dark-500'
                     }`}
-                  >
-                    {d}
-                  </button>
+                  >{d}</button>
                 ))}
               </div>
             </div>
@@ -156,17 +297,11 @@ export default function CodingInterview() {
               <label className="text-sm text-slate-400 block mb-2">Language</label>
               <div className="flex gap-2">
                 {LANGUAGES.map(l => (
-                  <button
-                    key={l}
-                    onClick={() => handleLanguageChange(l)}
+                  <button key={l} onClick={() => handleLanguageChange(l)}
                     className={`flex-1 py-2 rounded-lg border text-xs font-medium transition-colors ${
-                      language === l
-                        ? 'bg-purple-600 border-purple-500 text-white'
-                        : 'bg-dark-900 border-dark-600 text-slate-400 hover:border-dark-500'
+                      language === l ? 'bg-purple-600 border-purple-500 text-white' : 'bg-dark-900 border-dark-600 text-slate-400 hover:border-dark-500'
                     }`}
-                  >
-                    {l}
-                  </button>
+                  >{l}</button>
                 ))}
               </div>
             </div>
@@ -174,9 +309,7 @@ export default function CodingInterview() {
 
           {error && <p className="text-red-400 text-sm">{error}</p>}
 
-          <button
-            onClick={handleGenerate}
-            disabled={generating}
+          <button onClick={handleGenerate} disabled={generating}
             className="w-full bg-purple-600 hover:bg-purple-500 disabled:bg-dark-600 disabled:text-slate-500 text-white font-medium py-3 rounded-lg transition-colors"
           >
             {generating ? '⚙️ Generating problem...' : 'Generate Problem'}
@@ -195,15 +328,10 @@ export default function CodingInterview() {
                   problem.difficulty === 'easy' ? 'text-green-400 bg-green-400/10' :
                   problem.difficulty === 'medium' ? 'text-yellow-400 bg-yellow-400/10' :
                   'text-red-400 bg-red-400/10'
-                }`}>
-                  {problem.difficulty}
-                </span>
+                }`}>{problem.difficulty}</span>
               </div>
               <button
-                onClick={() => speakText(`${problem.title}. ${problem.description}`)
-                  .then(res => new Audio(URL.createObjectURL(res.data)).play())
-                  .catch(console.error)
-                }
+                onClick={() => speakTextAloud(`${problem.title}. ${problem.description}`)}
                 className="text-xs text-slate-400 hover:text-purple-400 flex items-center gap-1.5 transition-colors"
               >
                 🔊 Repeat
@@ -240,17 +368,11 @@ export default function CodingInterview() {
           {/* Language selector */}
           <div className="flex gap-2">
             {LANGUAGES.map(l => (
-              <button
-                key={l}
-                onClick={() => handleLanguageChange(l)}
+              <button key={l} onClick={() => handleLanguageChange(l)}
                 className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
-                  language === l
-                    ? 'bg-purple-600 border-purple-500 text-white'
-                    : 'bg-dark-700 border-dark-600 text-slate-400 hover:border-dark-500'
+                  language === l ? 'bg-purple-600 border-purple-500 text-white' : 'bg-dark-700 border-dark-600 text-slate-400 hover:border-dark-500'
                 }`}
-              >
-                {l}
-              </button>
+              >{l}</button>
             ))}
           </div>
 
@@ -262,14 +384,42 @@ export default function CodingInterview() {
               value={code}
               onChange={val => setCode(val || '')}
               theme="vs-dark"
-              options={{
-                fontSize: 14,
-                minimap: { enabled: false },
-                scrollBeyondLastLine: false,
-                lineNumbers: 'on',
-                tabSize: 4,
-              }}
+              options={{ fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false, lineNumbers: 'on', tabSize: 4 }}
             />
+          </div>
+
+          {/* Voice command bar */}
+          <div className="bg-dark-700 border border-dark-600 rounded-xl p-4 flex items-center gap-4">
+            <button
+              onClick={listening ? stopListening : startListening}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all flex-shrink-0 ${
+                listening ? 'bg-red-500 hover:bg-red-400 animate-pulse' : 'bg-purple-600 hover:bg-purple-500'
+              }`}
+            >
+              {listening ? '⏹' : '🎤'}
+            </button>
+
+            <div className="flex-1 min-w-0">
+              {voiceStatus && (
+                <p className="text-xs text-purple-400 mb-1">{voiceStatus}</p>
+              )}
+              {liveTranscript && (
+                <p className="text-xs text-slate-400 italic truncate">{liveTranscript}</p>
+              )}
+              {!voiceStatus && !liveTranscript && (
+                <p className="text-xs text-slate-600">
+                  Say: "hint", "submit", "repeat", or "new problem"
+                </p>
+              )}
+            </div>
+
+            <button
+              onClick={handleHint}
+              disabled={hinting}
+              className="text-xs text-slate-400 hover:text-yellow-400 transition-colors px-2 py-1 rounded border border-dark-600 hover:border-yellow-400/30 flex-shrink-0"
+            >
+              💡 Hint
+            </button>
           </div>
 
           {/* Actions */}

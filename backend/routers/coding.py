@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from agents.coding_interview import generate_problem, review_code
 from core.database import create_session, save_coding_question, get_coding_session_results
+from agents.coding_interview import generate_problem, review_code, generate_hint
 
 router = APIRouter(prefix="/coding", tags=["Coding Interview"])
 
@@ -26,6 +27,12 @@ class ReviewRequest(BaseModel):
     code: str
     language: str = "python"
     transcript: str = ""
+    
+class HintRequest(BaseModel):
+    problem_title: str
+    problem_description: str
+    code: str
+    language: str = "python"
 
 
 @router.post("/session/start")
@@ -97,6 +104,22 @@ async def get_coding_session(session_id: int):
     """Get full results for a coding session."""
     try:
         return get_coding_session_results(session_id)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.post("/hint")
+async def get_hint(request: HintRequest):
+    """Generate a nudge style hint for the current problem"""
+    try: 
+        hint = generate_hint(
+            problem_title = request.problem_title,
+            problem_description=request.problem_description,
+            code=request.code,
+            language=request.language,
+        )
+        return {"hint": hint, "status": "ready"}
     except Exception as e:
         import traceback
         traceback.print_exc()

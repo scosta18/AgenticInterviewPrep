@@ -131,3 +131,32 @@ Be brutally honest, with a motivating close. Focus on thinking process over synt
     result = response.choices[0].message.content
     score = _extract_score(result)
     return result, score
+
+
+def generate_hint(problem_title: str, problem_description: str, code: str, language: str) -> str:
+    """Generate a nudge stule hint without giving away the answer"""
+    prompt = f"""You are a technical interviewer giving a hint to a candidate who is stuck
+    Do NOT give away the solution. Give a nudge that helps them think in the righ direction.
+    
+    Problem: {problem_title}
+    {problem_description}
+    
+    Candidate's current code ({language}):
+    {code}
+    
+    Give a single, concise hint (2-3 sentances max). Focus on:
+    - What concept or pattern they should think about
+    - A question that guides their thinking
+    - What edge case or step they might be missing
+    
+    Do not write any code. Do not reveal the answer.
+    """
+    
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=200,
+        temperature=0.7,
+    )
+    
+    return response.choices[0].message.content
