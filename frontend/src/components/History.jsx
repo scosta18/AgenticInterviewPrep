@@ -82,7 +82,7 @@ export default function History() {
               </span>
               {detail.type === 'interview' && (
                 <a
-                  href={`http://localhost:8000/sessions/${detail.session.id}/report`}
+                  href={`https://scosta18-agentic-interview-prep-backend.hf.space/sessions/${detail.session.id}/report`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-lg transition-colors"

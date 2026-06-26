@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import Editor from '@monaco-editor/react'
-import { generateProblem, reviewCode, speakText, getDeepgramKey, getHint, startCodingSession } from '../api/client'
+import { generateProblem, reviewCode, speakText, getDeepgramKey, getHint, startCodingSession, completeSession } from '../api/client'
 
 const LANGUAGES = ['python', 'javascript', 'java', 'cpp']
 const DIFFICULTIES = ['easy', 'medium', 'hard']
@@ -130,6 +130,10 @@ export default function CodingInterview() {
         language,
       })
       setReview(res.data)
+
+      if(sessionId){
+        await completeSession(sessionId).catch(console.error)
+      }
     } catch (err) {
       setError('Review failed.')
       console.error(err)
