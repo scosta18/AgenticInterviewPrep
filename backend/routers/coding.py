@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from agents.coding_interview import generate_problem, review_code
+from agents.coding_interview import generate_problem, review_code, choose_next_difficulty
 from core.database import create_session, save_coding_question, get_coding_session_results
 from agents.coding_interview import generate_problem, review_code, generate_hint
 
@@ -34,6 +34,9 @@ class HintRequest(BaseModel):
     code: str
     language: str = "python"
 
+class NextDifficultRequest(BaseModel):
+    score: int
+    current_difficulty: str = "medium"
 
 @router.post("/session/start")
 async def start_coding_session(request: StartCodingSessionRequest):
@@ -120,6 +123,18 @@ async def get_hint(request: HintRequest):
             language=request.language,
         )
         return {"hint": hint, "status": "ready"}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+    
+    
+@router.post("/next-difficulty")
+async def get_next_difficulty(request: NextDifficultRequest):
+    """Decide next problem difficulty based on score"""
+    try:
+        result = choose_next_difficulty(request.score, request.current_difficulty)
+        return result
     except Exception as e:
         import traceback
         traceback.print_exc()

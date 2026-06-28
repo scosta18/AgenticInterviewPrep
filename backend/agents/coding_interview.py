@@ -160,3 +160,31 @@ def generate_hint(problem_title: str, problem_description: str, code: str, langu
     )
     
     return response.choices[0].message.content
+
+def choose_next_difficulty(score: int, current_difficulty: int) -> dict:
+    """Decide next problem difficulty based on score. The agentic step."""
+    difficulty_order = ['easy', 'medium', 'hard']
+    current_index = difficulty_order.index(current_difficulty) if current_difficulty in difficulty_order else 1
+    
+    if score >= 8:
+        next_index = min(current_index + 1, 2)
+        if next_index == current_index:
+            message = "Outstanding! You're already at the hardest level. Let's keep pushing."
+        else:
+            message = f"Great work! Moving up to {difficulty_order[next_index]}"
+    elif score >= 5:
+        next_index = current_index
+        message = f"Good effort. Staying at {difficulty_order[next_index]} to solidify your skills"
+    else:
+        next_index = max(current_index - 1, 0)
+        if next_index == current_index:
+            message = "Keep practicing. Let's work through some more easy problems"
+        else:
+            message = f"Let's step back to {difficulty_order[next_index]} and build confidence."
+            
+    return {
+        "next_difficulty": difficulty_order[next_index],
+        "message": message,
+        "score": score,
+        "previous_difficulty": current_difficulty,
+    }
