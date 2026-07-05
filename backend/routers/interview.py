@@ -4,6 +4,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from core.database import create_session, save_question, complete_session, get_session_results
 from core.vector_store import store_job_context
+from core.resume import extract_resume_text
 from agents.scrapper import run_research
 from agents.question_generator import generate_questions
 from agents.feedback_engine import get_feedback
@@ -19,6 +20,7 @@ class StartSessionRequest(BaseModel):
     job_description: str
     company_context: str = ""
     num_questions: int = 5
+    resume_text: str = ""
     
 class AnswerRequest(BaseModel):
     session_id: int
@@ -52,7 +54,8 @@ async def start_session(request: StartSessionRequest):
             request.company_name,
             request.role,
             request.job_description,
-            request.num_questions
+            request.num_questions,
+            request.resume_text
         )
         print(f"Questions generated")
 
@@ -96,6 +99,17 @@ async def submit_answer(request: AnswerRequest):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@router.post("/upload-resume/{session_id}")
+async def upload_resume(file: UploadFile = File(...)):
+    try:
+        text = await extract_resume_text(file)
+        return {"resume_text": text, "status": "success"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, deatil=str(e))
+        
     
 @router.get("/session/{session_id}")
 async def get_session(session_id):

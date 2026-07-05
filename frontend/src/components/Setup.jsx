@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { startSession } from '../api/client'
 
 export default function Setup({ onSessionStart }) {
@@ -11,6 +11,33 @@ export default function Setup({ onSessionStart }) {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [file, setFile] = useState(null)
+  const [status, setStatus] = useState('idle')
+
+  const handleFileChange = (e) => {
+    if(e.target.files && e.target.files.length > 0){
+      setFile(e.target.files[0])
+    }
+  }
+
+  const handleUpload = async () => {
+    if(!file){
+      return ''
+    }
+
+    const formData = new FormDate()
+    formData.append('file', file)
+
+    const response = await fetch('end point',{
+      method: 'POST',
+      body: formData,
+    })
+    if (!response.ok) throw new Error(
+      "Resume upload failed"
+    )
+    const data = await response.json()
+    return data.resume_text
+  }
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -26,8 +53,12 @@ export default function Setup({ onSessionStart }) {
     setError('')
 
     try {
+      if (file) {
+        resumeText = await handleUpload()
+      }
       const res = await startSession({
         ...form,
+        resume_text: resumeText,
         num_questions: parseInt(form.num_questions)
       })
       onSessionStart(res.data)
@@ -46,6 +77,21 @@ export default function Setup({ onSessionStart }) {
         <p className="text-slate-400 mt-1 text-sm">
           Enter the job details and your AI coach will prepare targeted questions.
         </p>
+      </div>
+
+      <div>
+        <h3>Please upload your current resume</h3>
+        <input
+        type='file'
+        onChange={handleFileChange}
+        disabled={status==='uploading'}
+        />
+        {file && (
+        <div style={{ marginTop: '10px' }}>
+          <p><strong>Selected File:</strong> {file.name}</p>
+          <p><strong>Size:</strong> {(file.size / 1024).toFixed(2)} KB</p>
+        </div>
+      )}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
