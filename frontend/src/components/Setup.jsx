@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { startSession } from '../api/client'
+import { startSession, uploadResume } from '../api/client'
 
 export default function Setup({ onSessionStart }) {
   const [form, setForm] = useState({
@@ -20,24 +20,15 @@ export default function Setup({ onSessionStart }) {
     }
   }
 
-  const handleUpload = async () => {
-    if(!file){
-      return ''
-    }
+const handleUpload = async () => {
+  if (!file) return ''
+  
+  const formData = new FormData()
+  formData.append('file', file)
 
-    const formData = new FormDate()
-    formData.append('file', file)
-
-    const response = await fetch('end point',{
-      method: 'POST',
-      body: formData,
-    })
-    if (!response.ok) throw new Error(
-      "Resume upload failed"
-    )
-    const data = await response.json()
-    return data.resume_text
-  }
+  const response = await uploadResume(formData)
+  return response.data.resume_text
+}
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -53,6 +44,7 @@ export default function Setup({ onSessionStart }) {
     setError('')
 
     try {
+      let resumeText=''
       if (file) {
         resumeText = await handleUpload()
       }

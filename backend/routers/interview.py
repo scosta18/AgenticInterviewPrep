@@ -100,7 +100,7 @@ async def submit_answer(request: AnswerRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-@router.post("/upload-resume/{session_id}")
+@router.post("/upload-resume")
 async def upload_resume(file: UploadFile = File(...)):
     try:
         text = await extract_resume_text(file)

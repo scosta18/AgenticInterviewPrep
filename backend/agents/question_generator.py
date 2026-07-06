@@ -13,7 +13,8 @@ def generate_questions(
     company_name: str,
     role: str,
     job_description: str,
-    num_questions: int = 5
+    num_questions: int = 5,
+    resume_text: str = ""
 ) -> str:
 
     context = get_relevant_context(
@@ -24,6 +25,11 @@ def generate_questions(
 
     if not context:
         context = "No additional context available. Use job description only."
+    
+    resume_block=f"""
+    Candidate's Resume:
+    {resume_text}
+    """if resume_text else ""
 
     prompt = f"""You are an expert interview coach preparing a candidate for a {role} role at {company_name}.
 
@@ -32,9 +38,11 @@ Here is relevant context gathered from real interview experiences and research:
 
 Job Description:
 {job_description}
+{resume_text}
 
 Generate exactly {num_questions} targeted interview questions this candidate should prepare for.
 Mix behavioral and technical questions specific to this role and company.
+{f"Tailor questions to the candidate's background and experience from their resume." if resume_text else ""}
 For each question explain in one sentence why this company would likely ask it.
 
 Format each question as:

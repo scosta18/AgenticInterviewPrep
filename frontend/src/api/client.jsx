@@ -23,3 +23,6 @@ export const startCodingSession = (data) => api.post('/coding/session/start', da
 export const getCodingSession = (id) => api.get(`/coding/session/${id}`)
 export const getHint = (data) => api.post('/coding/hint', data)
 export const getNextDifficulty = (data) => api.post('coding/next-difficulty', data)
+export const uploadResume = (formData) => api.post('/interview/upload-resume', formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+})
