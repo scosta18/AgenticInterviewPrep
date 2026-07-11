@@ -6,22 +6,29 @@ import Dashboard from './components/Dashboard'
 import CodingInterview from './components/CodingInterview'
 import LandingPage from './components/LandingPage'
 import Onboarding from './components/Onboarding'
+import Results from './components/Results'
 
 export default function App() {
   const [screen, setScreen] = useState('landing')
   const [sessionData, setSessionData] = useState(null)
+  const [completeSessionId, setCompelteSessionId] = useState(null)
 
   // const handleSessionStart = (data) => {
   //   setSessionData(data)
   //   setScreen('interview')
   // }
-    const handleSessionStart = (data) => {
+  const handleSessionStart = (data) => {
     if (data.type === 'coding') {
       setScreen('coding')
       return
     }
     setSessionData(data)
     setScreen('interview')
+  }
+
+  const handleSessionComplete = (sessionId) => {
+    setCompleteSessionId(sessionId)
+    setScreen('results')
   }
 
   return (
@@ -44,8 +51,8 @@ export default function App() {
                   key={s}
                   onClick={() => setScreen(s)}
                   className={`text-sm px-3 py-1.5 rounded-lg transition-colors capitalize ${screen === s
-                      ? 'bg-purple-600 text-white'
-                      : 'text-slate-400 hover:text-white'
+                    ? 'bg-purple-600 text-white'
+                    : 'text-slate-400 hover:text-white'
                     }`}
                 >
                   {s === 'setup' ? 'New Session' : s}
@@ -57,7 +64,10 @@ export default function App() {
           <main className="max-w-4xl mx-auto px-6 py-8">
             {screen === 'setup' && <Setup onSessionStart={handleSessionStart} />}
             {screen === 'interview' && sessionData && (
-              <Interview sessionData={sessionData} onComplete={() => setScreen('dashboard')} />
+              <Interview sessionData={sessionData} onComplete={handleSessionComplete} />
+            )}
+            {screen === 'results' && completedSessionId && (
+              <Results sessionId={completedSessionId} onPracticeAgain={() => setScreen('setup')} onDashboard={() => setScreen('dashboard')} />
             )}
             {screen === 'dashboard' && <Dashboard />}
             {screen === 'history' && <History />}

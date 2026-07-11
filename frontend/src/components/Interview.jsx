@@ -269,7 +269,7 @@ export default function Interview({ sessionData, onComplete }) {
 
   const handleComplete = async () => {
     await completeSession(sessionData.session_id);
-    onComplete();
+    onComplete(sessionData.session_id);
   };
 
   if (!questions.length)
