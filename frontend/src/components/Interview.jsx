@@ -7,7 +7,7 @@ import {
   prefetchSpeak,
 } from "../api/client";
 
-export default function Interview({ sessionData, onComplete }) {
+export default function Interview({ sessionData, onComplete, mode = 'practice' }) {
   const [questions, setQuestions] = useState([]);
   const [current, setCurrent] = useState(0);
   const [answer, setAnswer] = useState("");
@@ -31,30 +31,17 @@ export default function Interview({ sessionData, onComplete }) {
   useEffect(() => {
     const raw = sessionData.questions_raw || "";
     const parsed = [];
-
-    // Split on numbered lines like "1." or "1)"
     const blocks = raw.split(/\n(?=\d+[.)]\s)/);
-
     for (const block of blocks) {
       const lines = block.split("\n").filter((l) => l.trim());
       if (lines.length === 0) continue;
-
       const firstLine = lines[0].trim();
-
-      // Skip blocks that don't start with a number
       if (!/^\d+[.)]\s+/.test(firstLine)) continue;
-
-      const q = firstLine
-        .replace(/^\d+[.)]\s+/, "")
-        .replace(/\*\*/g, "")
-        .trim();
-
+      const q = firstLine.replace(/^\d+[.)]\s+/, "").replace(/\*\*/g, "").trim();
       if (q.length > 20) {
         parsed.push(q.endsWith("?") ? q : q + "?");
       }
     }
-
-    console.log("Parsed questions:", parsed);
     setQuestions(parsed.length ? parsed : [raw]);
   }, [sessionData]);
 
@@ -65,18 +52,13 @@ export default function Interview({ sessionData, onComplete }) {
       answerRef.current = "";
       feedbackRef.current = null;
       speakQuestion(questions[current]).then(() => {
-        startTimer(140); // 2:20 minutes per question
+        startTimer(140);
       });
     }
   }, [current, questions]);
 
-  // Keep refs in sync
-  useEffect(() => {
-    feedbackRef.current = feedback;
-  }, [feedback]);
-  useEffect(() => {
-    loadingRef.current = loading;
-  }, [loading]);
+  useEffect(() => { feedbackRef.current = feedback; }, [feedback]);
+  useEffect(() => { loadingRef.current = loading; }, [loading]);
 
   const startTimer = (seconds) => {
     setTimeLeft(seconds);
@@ -108,25 +90,17 @@ export default function Interview({ sessionData, onComplete }) {
 
   const speakQuestion = async (text) => {
     try {
-      // Use pre-fetched audio if available
       if (prefetchedAudioRef.current) {
-        const audioBytes = Uint8Array.from(
-          atob(prefetchedAudioRef.current),
-          (c) => c.charCodeAt(0),
-        );
+        const audioBytes = Uint8Array.from(atob(prefetchedAudioRef.current), (c) => c.charCodeAt(0));
         const blob = new Blob([audioBytes], { type: "audio/mpeg" });
         const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
-        audio.play();
+        new Audio(url).play();
         prefetchedAudioRef.current = null;
         return;
       }
-
-      // Fallback to normal fetch
       const res = await speakText(text);
       const url = URL.createObjectURL(res.data);
-      const audio = new Audio(url);
-      audio.play();
+      new Audio(url).play();
     } catch (err) {
       console.error("Speech failed:", err);
     }
@@ -137,7 +111,6 @@ export default function Interview({ sessionData, onComplete }) {
     try {
       const res = await prefetchSpeak(questions[nextIndex]);
       prefetchedAudioRef.current = res.data.audio_b64;
-      console.log("Prefetched audio for next question");
     } catch (err) {
       console.error("Prefetch failed:", err);
     }
@@ -146,9 +119,7 @@ export default function Interview({ sessionData, onComplete }) {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: "audio/webm",
-      });
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
       setLiveTranscript("");
@@ -158,7 +129,7 @@ export default function Interview({ sessionData, onComplete }) {
 
       const socket = new WebSocket(
         `wss://api.deepgram.com/v1/listen?model=nova-2&language=en-US&smart_format=true&interim_results=true`,
-        ["token", apiKey],
+        ["token", apiKey]
       );
       deepgramSocketRef.current = socket;
 
@@ -184,9 +155,7 @@ export default function Interview({ sessionData, onComplete }) {
       socket.onclose = () => console.log("Deepgram WS closed");
 
       await new Promise((resolve, reject) => {
-        socket.onopen = () => {
-          resolve();
-        };
+        socket.onopen = () => { resolve(); };
         setTimeout(() => reject(new Error("WebSocket timeout")), 5000);
       });
 
@@ -235,10 +204,16 @@ export default function Interview({ sessionData, onComplete }) {
       setFeedback(res.data);
       setScores((prev) => [...prev, res.data.score]);
 
-      // Pre-fetch next question audio in background
       const nextIndex = current + 1;
       if (nextIndex < questions.length) {
         prefetchNextQuestion(nextIndex);
+      }
+
+      // In mock mode, auto-advance after a short delay
+      if (mode === 'mock') {
+        setTimeout(() => {
+          handleNextQuestion();
+        }, 1500);
       }
     } catch (err) {
       console.error(err);
@@ -273,11 +248,7 @@ export default function Interview({ sessionData, onComplete }) {
   };
 
   if (!questions.length)
-    return (
-      <div className="text-center py-20 text-slate-400">
-        Loading questions...
-      </div>
-    );
+    return <div className="text-center py-20 text-slate-400">Loading questions...</div>;
 
   const avgScore = scores.length
     ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
@@ -285,27 +256,32 @@ export default function Interview({ sessionData, onComplete }) {
 
   return (
     <div className="space-y-6">
+
       {/* Progress */}
       <div className="flex items-center justify-between">
         <span className="text-sm text-slate-400">
           Question {current + 1} of {questions.length}
         </span>
         <div className="flex items-center gap-4">
-          {timeLeft !== null && (
-            <span
-              className={`text-sm font-mono font-bold ${
-                timeLeft <= 30
-                  ? "text-red-400 animate-pulse"
-                  : timeLeft <= 60
-                    ? "text-yellow-400"
-                    : "text-green-400"
-              }`}
-            >
-              ⏱ {Math.floor(timeLeft / 60)}:
-              {String(timeLeft % 60).padStart(2, "0")}
+          {mode === 'mock' && (
+            <span className="text-xs text-red-400 font-mono border border-red-500/30 px-2 py-0.5 rounded">
+              🎯 Mock Interview
             </span>
           )}
-          {avgScore !== null && (
+          {timeLeft !== null && (
+            <span className={`text-sm font-mono font-bold ${
+              mode === 'mock'
+                ? 'text-red-400 animate-pulse'
+                : timeLeft <= 30
+                ? 'text-red-400 animate-pulse'
+                : timeLeft <= 60
+                ? 'text-yellow-400'
+                : 'text-green-400'
+            }`}>
+              ⏱ {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
+            </span>
+          )}
+          {avgScore !== null && mode === 'practice' && (
             <span className="text-sm text-purple-400 font-mono">
               Avg: {avgScore}/10
             </span>
@@ -315,30 +291,30 @@ export default function Interview({ sessionData, onComplete }) {
 
       <div className="w-full bg-dark-700 rounded-full h-1.5">
         <div
-          className="bg-purple-500 h-1.5 rounded-full transition-all"
+          className={`h-1.5 rounded-full transition-all ${mode === 'mock' ? 'bg-red-500' : 'bg-purple-500'}`}
           style={{ width: `${(current / questions.length) * 100}%` }}
         />
       </div>
 
       {/* Question */}
-      <div className="bg-dark-700 border border-dark-600 rounded-xl p-6">
+      <div className={`bg-dark-700 border rounded-xl p-6 ${mode === 'mock' ? 'border-red-500/20' : 'border-dark-600'}`}>
         <div className="flex items-center justify-between mb-3">
-          <p className="text-xs text-purple-400 font-mono uppercase tracking-wider">
+          <p className={`text-xs font-mono uppercase tracking-wider ${mode === 'mock' ? 'text-red-400' : 'text-purple-400'}`}>
             Question {current + 1}
           </p>
-          <button
-            onClick={() => speakQuestion(questions[current])}
-            className="text-xs text-slate-400 hover:text-purple-400 flex items-center gap-1.5 transition-colors"
-          >
-            🔊 Repeat
-          </button>
+          {mode === 'practice' && (
+            <button
+              onClick={() => speakQuestion(questions[current])}
+              className="text-xs text-slate-400 hover:text-purple-400 flex items-center gap-1.5 transition-colors"
+            >
+              🔊 Repeat
+            </button>
+          )}
         </div>
-        <p className="text-white text-lg leading-relaxed">
-          {questions[current]}
-        </p>
+        <p className="text-white text-lg leading-relaxed">{questions[current]}</p>
       </div>
 
-      {/* Answer */}
+      {/* Answer input — show when no feedback yet */}
       {!feedback && (
         <div className="space-y-3">
           <div className="relative">
@@ -359,8 +335,8 @@ export default function Interview({ sessionData, onComplete }) {
                 recording
                   ? "bg-red-500 hover:bg-red-400 animate-pulse"
                   : transcribing
-                    ? "bg-dark-600 cursor-wait"
-                    : "bg-purple-600 hover:bg-purple-500"
+                  ? "bg-dark-600 cursor-wait"
+                  : "bg-purple-600 hover:bg-purple-500"
               }`}
             >
               {transcribing ? (
@@ -381,58 +357,67 @@ export default function Interview({ sessionData, onComplete }) {
               {liveTranscript && (
                 <div className="bg-dark-600 border border-dark-500 rounded-lg px-4 py-3">
                   <p className="text-xs text-slate-500 mb-1">Live transcript</p>
-                  <p className="text-slate-300 text-sm italic">
-                    {liveTranscript}
-                  </p>
+                  <p className="text-slate-300 text-sm italic">{liveTranscript}</p>
                 </div>
               )}
             </div>
           )}
 
           {transcribing && (
-            <p className="text-purple-400 text-sm text-center">
-              ⏳ Transcribing your answer...
-            </p>
+            <p className="text-purple-400 text-sm text-center">⏳ Transcribing your answer...</p>
           )}
 
           <button
             onClick={handleSubmit}
             disabled={loading || !answer.trim()}
-            className="w-full bg-purple-600 hover:bg-purple-500 disabled:bg-dark-600 disabled:text-slate-500 text-white font-medium py-3 rounded-lg transition-colors"
+            className={`w-full disabled:bg-dark-600 disabled:text-slate-500 text-white font-medium py-3 rounded-lg transition-colors ${
+              mode === 'mock'
+                ? 'bg-red-600 hover:bg-red-500'
+                : 'bg-purple-600 hover:bg-purple-500'
+            }`}
           >
             {loading ? "Analyzing your answer..." : "Submit Answer"}
           </button>
         </div>
       )}
 
-      {/* Feedback */}
-      {feedback && (
+      {/* Feedback — PRACTICE MODE only */}
+      {feedback && mode === 'practice' && (
         <div className="space-y-4">
           <div className="bg-dark-700 border border-dark-600 rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-xs text-purple-400 font-mono uppercase tracking-wider">
-                AI Feedback
-              </p>
+              <p className="text-xs text-purple-400 font-mono uppercase tracking-wider">AI Feedback</p>
               <span className="text-2xl font-bold font-mono text-white">
-                {feedback.score}
-                <span className="text-slate-500 text-lg">/10</span>
+                {feedback.score}<span className="text-slate-500 text-lg">/10</span>
               </span>
             </div>
             <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
               {feedback.feedback}
             </div>
           </div>
-
           <button
             onClick={handleNext}
             className="w-full bg-purple-600 hover:bg-purple-500 text-white font-medium py-3 rounded-lg transition-colors"
           >
-            {current + 1 >= questions.length
-              ? "Complete Session"
-              : "Next Question →"}
+            {current + 1 >= questions.length ? "Complete Session" : "Next Question →"}
           </button>
         </div>
       )}
+
+      {/* MOCK MODE — no feedback, just a status message and auto-advance */}
+      {feedback && mode === 'mock' && (
+        <div className="space-y-4">
+          <div className="bg-dark-700 border border-red-500/20 rounded-xl p-4 text-center">
+            <p className="text-red-400 text-sm font-medium">✓ Answer recorded</p>
+            <p className="text-slate-500 text-xs mt-1">
+              {current + 1 >= questions.length
+                ? 'Loading your results...'
+                : 'Moving to next question...'}
+            </p>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

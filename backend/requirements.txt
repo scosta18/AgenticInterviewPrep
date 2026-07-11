@@ -11,4 +11,5 @@ python-multipart
 python-dotenv
 sqlite-utils
 numpy
-pymupdf
+PyMuPDF
+python-docx
