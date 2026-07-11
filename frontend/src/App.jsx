@@ -11,7 +11,7 @@ import Results from './components/Results'
 export default function App() {
   const [screen, setScreen] = useState('landing')
   const [sessionData, setSessionData] = useState(null)
-  const [completeSessionId, setCompelteSessionId] = useState(null)
+  const [completedSessionId, setCompletedSessionId] = useState(null)
 
   // const handleSessionStart = (data) => {
   //   setSessionData(data)
@@ -27,9 +27,10 @@ export default function App() {
   }
 
   const handleSessionComplete = (sessionId) => {
-    setCompleteSessionId(sessionId)
+    setCompletedSessionId(sessionId)
     setScreen('results')
   }
+
 
   return (
     <div className="min-h-screen bg-dark-900 text-slate-200">
@@ -60,11 +61,14 @@ export default function App() {
               ))}
             </nav>
           </header>
-          {screen === 'setup' && <Onboarding onSessionStart={handleSessionStart} />}
           <main className="max-w-4xl mx-auto px-6 py-8">
-            {screen === 'setup' && <Setup onSessionStart={handleSessionStart} />}
+            {screen === 'setup' && <Onboarding onSessionStart={handleSessionStart} />}
             {screen === 'interview' && sessionData && (
-              <Interview sessionData={sessionData} onComplete={handleSessionComplete} />
+              <Interview
+                sessionData={sessionData}
+                mode={sessionData.mode || 'practice'}
+                onComplete={handleSessionComplete}
+              />
             )}
             {screen === 'results' && completedSessionId && (
               <Results sessionId={completedSessionId} onPracticeAgain={() => setScreen('setup')} onDashboard={() => setScreen('dashboard')} />

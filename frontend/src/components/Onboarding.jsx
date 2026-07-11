@@ -22,6 +22,7 @@ export default function Onboarding({ onSessionStart }) {
   const [field, setField] = useState(null)
   const [prepType, setPrepType] = useState(null)
   const [interviewType, setInterviewType] = useState('behavioral')
+  const [mode, setMode] = useState('practice')
   const [form, setForm] = useState({
     company_name: '',
     role: '',
@@ -60,12 +61,15 @@ export default function Onboarding({ onSessionStart }) {
         setError('Please select your field and what you are preparing for.')
         return
       }
-      // Reset interview type if not technical
       if (!isTechnical) setInterviewType('behavioral')
     }
     if (step === 2) {
-      if (!form.company_name || !form.role || !form.job_description) {
+      if (interviewType === 'behavioral' && (!form.company_name || !form.role || !form.job_description)) {
         setError('Please fill in company name, role, and job description.')
+        return
+      }
+      if (interviewType === 'coding' && (!form.company_name || !form.role)) {
+        setError('Please fill in company name and role.')
         return
       }
     }
@@ -88,8 +92,7 @@ export default function Onboarding({ onSessionStart }) {
       }
 
       if (interviewType === 'coding') {
-        // For coding sessions, redirect to coding tab
-        onSessionStart({ type: 'coding', field, prepType })
+        onSessionStart({ type: 'coding', field, prepType, mode })
         return
       }
 
@@ -98,7 +101,7 @@ export default function Onboarding({ onSessionStart }) {
         resume_text: resumeText,
         num_questions: parseInt(form.num_questions),
       })
-      onSessionStart({ ...res.data, type: 'behavioral' })
+      onSessionStart({ ...res.data, type: 'behavioral', mode })
     } catch (err) {
       setError('Failed to start session. Make sure the backend is running.')
       console.error(err)
@@ -243,6 +246,46 @@ export default function Onboarding({ onSessionStart }) {
             </div>
           )}
 
+          {/* Mode selector — only for behavioral */}
+          {interviewType === 'behavioral' && (
+            <div>
+              <label className="text-sm text-slate-400 block mb-2">Session mode</label>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setMode('practice')}
+                  className={`flex-1 p-4 rounded-xl border text-left transition-colors ${
+                    mode === 'practice'
+                      ? 'bg-purple-600/10 border-purple-500'
+                      : 'bg-dark-700 border-dark-600 hover:border-dark-500'
+                  }`}
+                >
+                  <span className="text-xl block mb-1">📚</span>
+                  <p className="text-white text-sm font-medium">Practice</p>
+                  <p className="text-slate-500 text-xs mt-0.5">Feedback after each question, hints available, relaxed timer</p>
+                </button>
+                <button
+                  onClick={() => setMode('mock')}
+                  className={`flex-1 p-4 rounded-xl border text-left transition-colors ${
+                    mode === 'mock'
+                      ? 'bg-red-500/10 border-red-500'
+                      : 'bg-dark-700 border-dark-600 hover:border-dark-500'
+                  }`}
+                >
+                  <span className="text-xl block mb-1">🎯</span>
+                  <p className="text-white text-sm font-medium">Mock Interview</p>
+                  <p className="text-slate-500 text-xs mt-0.5">No feedback until the end, strict timer, real interview pressure</p>
+                </button>
+              </div>
+              {mode === 'mock' && (
+                <div className="mt-3 bg-red-500/5 border border-red-500/20 rounded-lg px-4 py-3">
+                  <p className="text-red-400 text-xs">
+                    ⚠️ Mock mode: no feedback between questions, strict auto-submit timer, full debrief at the end only.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           {interviewType === 'behavioral' && (
             <>
               <div>
@@ -353,6 +396,12 @@ export default function Onboarding({ onSessionStart }) {
               <span className="text-slate-400 text-sm">Interview type</span>
               <span className="text-white text-sm capitalize">{interviewType}</span>
             </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400 text-sm">Mode</span>
+              <span className={`text-sm font-medium capitalize ${mode === 'mock' ? 'text-red-400' : 'text-purple-400'}`}>
+                {mode === 'mock' ? '🎯 Mock Interview' : '📚 Practice'}
+              </span>
+            </div>
             {interviewType === 'behavioral' && (
               <div className="flex items-center justify-between">
                 <span className="text-slate-400 text-sm">Questions</span>
@@ -402,13 +451,19 @@ export default function Onboarding({ onSessionStart }) {
             <button
               onClick={handleStart}
               disabled={loading}
-              className="flex-1 bg-purple-600 hover:bg-purple-500 disabled:bg-dark-600 disabled:text-slate-500 text-white font-medium py-3 rounded-lg transition-colors"
+              className={`flex-1 disabled:bg-dark-600 disabled:text-slate-500 text-white font-medium py-3 rounded-lg transition-colors ${
+                mode === 'mock'
+                  ? 'bg-red-600 hover:bg-red-500'
+                  : 'bg-purple-600 hover:bg-purple-500'
+              }`}
             >
               {loading
                 ? '🔍 Researching and generating questions...'
                 : interviewType === 'coding'
                 ? '💻 Start Coding Interview'
-                : `🎤 Start Interview — ${form.num_questions} Questions`
+                : mode === 'mock'
+                ? `🎯 Start Mock Interview — ${form.num_questions} Questions`
+                : `🎤 Start Practice — ${form.num_questions} Questions`
               }
             </button>
           </div>
