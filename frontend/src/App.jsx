@@ -67,6 +67,7 @@ export default function App() {
               <Interview
                 sessionData={sessionData}
                 mode={sessionData.mode || 'practice'}
+                interview_type={sessionData.interview_type || 'behavioral'}
                 onComplete={handleSessionComplete}
               />
             )}

@@ -64,7 +64,8 @@ export default function Onboarding({ onSessionStart }) {
       if (!isTechnical) setInterviewType('behavioral')
     }
     if (step === 2) {
-      if (interviewType === 'behavioral' && (!form.company_name || !form.role || !form.job_description)) {
+      if (['behavioral', 'case', 'product', 'system_design'].includes(interviewType) && 
+      (!form.company_name || !form.role || !form.job_description) && (!form.company_name || !form.role || !form.job_description)) {
         setError('Please fill in company name, role, and job description.')
         return
       }
@@ -100,8 +101,9 @@ export default function Onboarding({ onSessionStart }) {
         ...form,
         resume_text: resumeText,
         num_questions: parseInt(form.num_questions),
+        interviewType: interviewType,
       })
-      onSessionStart({ ...res.data, type: 'behavioral', mode })
+      onSessionStart({ ...res.data, type: 'behavioral', mode, interview_type: interviewType })
     } catch (err) {
       setError('Failed to start session. Make sure the backend is running.')
       console.error(err)
@@ -142,11 +144,10 @@ export default function Onboarding({ onSessionStart }) {
                 <button
                   key={f.id}
                   onClick={() => setField(f.id)}
-                  className={`text-left p-3 rounded-xl border transition-colors flex items-center gap-3 ${
-                    field === f.id
+                  className={`text-left p-3 rounded-xl border transition-colors flex items-center gap-3 ${field === f.id
                       ? 'bg-purple-600/10 border-purple-500 text-white'
                       : 'bg-dark-700 border-dark-600 text-slate-400 hover:border-dark-500'
-                  }`}
+                    }`}
                 >
                   <span className="text-lg">{f.icon}</span>
                   <span className="text-sm font-medium">{f.label}</span>
@@ -162,11 +163,10 @@ export default function Onboarding({ onSessionStart }) {
                 <button
                   key={p.id}
                   onClick={() => setPrepType(p.id)}
-                  className={`flex-1 py-3 rounded-xl border text-sm font-medium transition-colors flex flex-col items-center gap-1.5 ${
-                    prepType === p.id
+                  className={`flex-1 py-3 rounded-xl border text-sm font-medium transition-colors flex flex-col items-center gap-1.5 ${prepType === p.id
                       ? 'bg-purple-600/10 border-purple-500 text-white'
                       : 'bg-dark-700 border-dark-600 text-slate-400 hover:border-dark-500'
-                  }`}
+                    }`}
                 >
                   <span className="text-xl">{p.icon}</span>
                   {p.label}
@@ -220,44 +220,44 @@ export default function Onboarding({ onSessionStart }) {
           </div>
 
           {/* Interview type — only for technical fields */}
-          {isTechnical && (
-            <div>
-              <label className="text-sm text-slate-400 block mb-2">Interview type</label>
-              <div className="flex gap-3">
-                {[
-                  { id: 'behavioral', label: 'Behavioral', icon: '🎤', desc: 'Voice Q&A, feedback scoring' },
-                  { id: 'coding', label: 'Coding', icon: '💻', desc: 'Monaco editor, AI review' },
-                ].map(t => (
-                  <button
-                    key={t.id}
-                    onClick={() => setInterviewType(t.id)}
-                    className={`flex-1 p-4 rounded-xl border text-left transition-colors ${
-                      interviewType === t.id
-                        ? 'bg-purple-600/10 border-purple-500'
-                        : 'bg-dark-700 border-dark-600 hover:border-dark-500'
+          {/* Interview type — show for everyone, filter technical-only by field */}
+          <div>
+            <label className="text-sm text-slate-400 block mb-2">Interview type</label>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { id: 'behavioral', label: 'Behavioral', icon: '🎤', desc: 'Voice Q&A, feedback scoring', technical: false },
+                { id: 'case', label: 'Case Interview', icon: '📊', desc: 'Business problem solving', technical: false },
+                { id: 'product', label: 'Product Sense', icon: '🧩', desc: 'PM-style product thinking', technical: false },
+                { id: 'coding', label: 'Coding', icon: '💻', desc: 'Monaco editor, AI review', technical: true },
+                { id: 'system_design', label: 'System Design', icon: '🏗️', desc: 'Architecture & scale', technical: true },
+              ].filter(t => !t.technical || isTechnical).map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => setInterviewType(t.id)}
+                  className={`p-4 rounded-xl border text-left transition-colors ${interviewType === t.id
+                      ? 'bg-purple-600/10 border-purple-500'
+                      : 'bg-dark-700 border-dark-600 hover:border-dark-500'
                     }`}
-                  >
-                    <span className="text-xl block mb-1">{t.icon}</span>
-                    <p className="text-white text-sm font-medium">{t.label}</p>
-                    <p className="text-slate-500 text-xs mt-0.5">{t.desc}</p>
-                  </button>
-                ))}
-              </div>
+                >
+                  <span className="text-xl block mb-1">{t.icon}</span>
+                  <p className="text-white text-sm font-medium">{t.label}</p>
+                  <p className="text-slate-500 text-xs mt-0.5">{t.desc}</p>
+                </button>
+              ))}
             </div>
-          )}
+          </div>
 
           {/* Mode selector — only for behavioral */}
-          {interviewType === 'behavioral' && (
+          {interviewType !== 'coding' && (
             <div>
               <label className="text-sm text-slate-400 block mb-2">Session mode</label>
               <div className="flex gap-3">
                 <button
                   onClick={() => setMode('practice')}
-                  className={`flex-1 p-4 rounded-xl border text-left transition-colors ${
-                    mode === 'practice'
+                  className={`flex-1 p-4 rounded-xl border text-left transition-colors ${mode === 'practice'
                       ? 'bg-purple-600/10 border-purple-500'
                       : 'bg-dark-700 border-dark-600 hover:border-dark-500'
-                  }`}
+                    }`}
                 >
                   <span className="text-xl block mb-1">📚</span>
                   <p className="text-white text-sm font-medium">Practice</p>
@@ -265,11 +265,10 @@ export default function Onboarding({ onSessionStart }) {
                 </button>
                 <button
                   onClick={() => setMode('mock')}
-                  className={`flex-1 p-4 rounded-xl border text-left transition-colors ${
-                    mode === 'mock'
+                  className={`flex-1 p-4 rounded-xl border text-left transition-colors ${mode === 'mock'
                       ? 'bg-red-500/10 border-red-500'
                       : 'bg-dark-700 border-dark-600 hover:border-dark-500'
-                  }`}
+                    }`}
                 >
                   <span className="text-xl block mb-1">🎯</span>
                   <p className="text-white text-sm font-medium">Mock Interview</p>
@@ -286,7 +285,7 @@ export default function Onboarding({ onSessionStart }) {
             </div>
           )}
 
-          {interviewType === 'behavioral' && (
+          {interviewType !== 'coding' && (
             <>
               <div>
                 <label className="text-sm text-slate-400 block mb-2">Number of Questions</label>
@@ -295,11 +294,10 @@ export default function Onboarding({ onSessionStart }) {
                     <button
                       key={n}
                       onClick={() => setForm({ ...form, num_questions: n })}
-                      className={`flex-1 py-2.5 rounded-lg border text-sm font-medium transition-colors ${
-                        form.num_questions === n
+                      className={`flex-1 py-2.5 rounded-lg border text-sm font-medium transition-colors ${form.num_questions === n
                           ? 'bg-purple-600 border-purple-500 text-white'
                           : 'bg-dark-700 border-dark-600 text-slate-400 hover:border-dark-500'
-                      }`}
+                        }`}
                     >
                       {n === 3 ? '3 — Quick' : n === 5 ? '5 — Standard' : n === 10 ? '10 — Full' : '15 — Intensive'}
                     </button>
@@ -451,19 +449,18 @@ export default function Onboarding({ onSessionStart }) {
             <button
               onClick={handleStart}
               disabled={loading}
-              className={`flex-1 disabled:bg-dark-600 disabled:text-slate-500 text-white font-medium py-3 rounded-lg transition-colors ${
-                mode === 'mock'
+              className={`flex-1 disabled:bg-dark-600 disabled:text-slate-500 text-white font-medium py-3 rounded-lg transition-colors ${mode === 'mock'
                   ? 'bg-red-600 hover:bg-red-500'
                   : 'bg-purple-600 hover:bg-purple-500'
-              }`}
+                }`}
             >
               {loading
                 ? '🔍 Researching and generating questions...'
                 : interviewType === 'coding'
-                ? '💻 Start Coding Interview'
-                : mode === 'mock'
-                ? `🎯 Start Mock Interview — ${form.num_questions} Questions`
-                : `🎤 Start Practice — ${form.num_questions} Questions`
+                  ? '💻 Start Coding Interview'
+                  : mode === 'mock'
+                    ? `🎯 Start Mock Interview — ${form.num_questions} Questions`
+                    : `🎤 Start Practice — ${form.num_questions} Questions`
               }
             </button>
           </div>

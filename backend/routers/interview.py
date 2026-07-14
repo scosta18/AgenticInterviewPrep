@@ -21,6 +21,7 @@ class StartSessionRequest(BaseModel):
     company_context: str = ""
     num_questions: int = 5
     resume_text: str = ""
+    interview_type: str = "behavioral" 
     
 class AnswerRequest(BaseModel):
     session_id: int
@@ -28,6 +29,7 @@ class AnswerRequest(BaseModel):
     answer: str
     company_name: str
     role: str
+    interview_type: str = "behavioral"
     
 @router.post("/start")
 async def start_session(request: StartSessionRequest):
@@ -55,7 +57,8 @@ async def start_session(request: StartSessionRequest):
             request.role,
             request.job_description,
             request.num_questions,
-            request.resume_text
+            request.resume_text,
+            request.interview_type
         )
         print(f"Questions generated")
 
@@ -80,7 +83,8 @@ async def submit_answer(request: AnswerRequest):
             request.question,
             request.answer,
             request.company_name,
-            request.role
+            request.role,
+            request.interview_type
         )
         
         save_question(

@@ -107,7 +107,7 @@ function InterviewerAvatar({ state }) {
   )
 }
 
-export default function Interview({ sessionData, onComplete, mode = 'practice' }) {
+export default function Interview({ sessionData, onComplete, mode = 'practice', interview_type = 'behavioral' }) {
   const [questions, setQuestions] = useState([]);
   const [current, setCurrent] = useState(0);
   const [answer, setAnswer] = useState("");
@@ -307,6 +307,7 @@ export default function Interview({ sessionData, onComplete, mode = 'practice' }
         answer: answerText,
         company_name: "the company",
         role: "the role",
+        interview_type: interview_type,
       });
       feedbackRef.current = res.data;
       setFeedback(res.data);
