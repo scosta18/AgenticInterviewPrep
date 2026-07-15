@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import Setup from './components/Setup'
+// import Setup from './components/Setup'
+import { useState, useEffect } from 'react'
 import Interview from './components/Interview'
 import History from './components/History'
 import Dashboard from './components/Dashboard'
@@ -7,16 +7,34 @@ import CodingInterview from './components/CodingInterview'
 import LandingPage from './components/LandingPage'
 import Onboarding from './components/Onboarding'
 import Results from './components/Results'
+import { supabase } from './lib/supabase'
+import Auth from './components/Auth'
 
 export default function App() {
   const [screen, setScreen] = useState('landing')
   const [sessionData, setSessionData] = useState(null)
   const [completedSessionId, setCompletedSessionId] = useState(null)
+  const [user, setUser] = useState(null)
+  const [authLoading, setAuthLoading] = useState(true)
 
   // const handleSessionStart = (data) => {
   //   setSessionData(data)
   //   setScreen('interview')
   // }
+  useEffect(() => {
+  // Check current session
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    setUser(session?.user ?? null)
+    setAuthLoading(false)
+  })
+
+  // Listen for auth changes
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    setUser(session?.user ?? null)
+  })
+
+  return () => subscription.unsubscribe()
+}, [])
   const handleSessionStart = (data) => {
     if (data.type === 'coding') {
       setScreen('coding')
@@ -31,7 +49,13 @@ export default function App() {
     setScreen('results')
   }
 
+if (authLoading) return (
+  <div className="min-h-screen bg-dark-900 flex items-center justify-center">
+    <p className="text-slate-400">Loading...</p>
+  </div>
+)
 
+if (!user) return <Auth />
   return (
     <div className="min-h-screen bg-dark-900 text-slate-200">
 
