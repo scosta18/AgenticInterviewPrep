@@ -112,7 +112,7 @@ async def upload_resume(file: UploadFile = File(...)):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, deatil=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
         
     
 @router.get("/session/{session_id}")
