@@ -9,6 +9,7 @@ import Onboarding from './components/Onboarding'
 import Results from './components/Results'
 import { supabase } from './lib/supabase'
 import Auth from './components/Auth'
+import Profile from './components/Profile'
 
 export default function App() {
   const [screen, setScreen] = useState('landing')
@@ -22,19 +23,19 @@ export default function App() {
   //   setScreen('interview')
   // }
   useEffect(() => {
-  // Check current session
-  supabase.auth.getSession().then(({ data: { session } }) => {
-    setUser(session?.user ?? null)
-    setAuthLoading(false)
-  })
+    // Check current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+      setAuthLoading(false)
+    })
 
-  // Listen for auth changes
-  const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-    setUser(session?.user ?? null)
-  })
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
 
-  return () => subscription.unsubscribe()
-}, [])
+    return () => subscription.unsubscribe()
+  }, [])
   const handleSessionStart = (data) => {
     if (data.type === 'coding') {
       setScreen('coding')
@@ -49,13 +50,13 @@ export default function App() {
     setScreen('results')
   }
 
-if (authLoading) return (
-  <div className="min-h-screen bg-dark-900 flex items-center justify-center">
-    <p className="text-slate-400">Loading...</p>
-  </div>
-)
+  if (authLoading) return (
+    <div className="min-h-screen bg-dark-900 flex items-center justify-center">
+      <p className="text-slate-400">Loading...</p>
+    </div>
+  )
 
-if (!user) return <Auth />
+  if (!user) return <Auth />
   return (
     <div className="min-h-screen bg-dark-900 text-slate-200">
 
@@ -70,19 +71,25 @@ if (!user) return <Auth />
               </div>
               <span className="font-semibold text-white">Interview Prep AI</span>
             </div>
-            <nav className="flex gap-2">
+            <nav className="flex items-center gap-2">
               {['setup', 'coding', 'dashboard', 'history'].map(s => (
                 <button
                   key={s}
                   onClick={() => setScreen(s)}
-                  className={`text-sm px-3 py-1.5 rounded-lg transition-colors capitalize ${screen === s
-                    ? 'bg-purple-600 text-white'
-                    : 'text-slate-400 hover:text-white'
+                  className={`text-sm px-3 py-1.5 rounded-lg transition-colors capitalize ${screen === s ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'
                     }`}
                 >
                   {s === 'setup' ? 'New Session' : s}
                 </button>
               ))}
+              {/* Avatar button */}
+              <button
+                onClick={() => setScreen('profile')}
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ml-2 transition-colors ${screen === 'profile' ? 'bg-purple-500' : 'bg-purple-600 hover:bg-purple-500'
+                  }`}
+              >
+                {(user?.user_metadata?.full_name || user?.email || '?')[0].toUpperCase()}
+              </button>
             </nav>
           </header>
           <main className="max-w-4xl mx-auto px-6 py-8">
@@ -101,6 +108,7 @@ if (!user) return <Auth />
             {screen === 'dashboard' && <Dashboard />}
             {screen === 'history' && <History />}
             {screen === 'coding' && <CodingInterview />}
+            {screen === 'profile' && <Profile user={user} onSignOut={() => setScreen('landing')} />}  {/* ADD THIS */}
           </main>
         </>
       )}

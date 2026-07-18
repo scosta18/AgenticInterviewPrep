@@ -101,7 +101,7 @@ export default function Onboarding({ onSessionStart }) {
         ...form,
         resume_text: resumeText,
         num_questions: parseInt(form.num_questions),
-        interviewType: interviewType,
+        interview_type: interviewType,
       })
       onSessionStart({ ...res.data, type: 'behavioral', mode, interview_type: interviewType })
     } catch (err) {
