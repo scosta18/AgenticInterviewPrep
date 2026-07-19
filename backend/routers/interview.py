@@ -1,10 +1,11 @@
 
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from core.database import create_session, save_question, complete_session, get_session_results
 from core.vector_store import store_job_context
 from core.resume import extract_resume_text
+from core.auth import get_current_user
 from agents.scrapper import run_research
 from agents.question_generator import generate_questions
 from agents.feedback_engine import get_feedback
@@ -32,8 +33,9 @@ class AnswerRequest(BaseModel):
     interview_type: str = "behavioral"
     
 @router.post("/start")
-async def start_session(request: StartSessionRequest):
+async def start_session(request: StartSessionRequest, current_user = Depends(get_current_user)):
     try:
+        
         session_id = create_session(request.company_name, request.role)
         print(f"Session created: {session_id}")
 
@@ -76,7 +78,7 @@ async def start_session(request: StartSessionRequest):
 
     
 @router.post("/answer")
-async def submit_answer(request: AnswerRequest):
+async def submit_answer(request: AnswerRequest, current_user = Depends(get_current_user)):
     """Submit an answer to a question"""
     try:
         feedback_text, score = get_feedback(
@@ -125,7 +127,7 @@ async def get_session(session_id):
     
     
 @router.post("/session/{session_id}/complete")
-async def finish_session(session_id: int):
+async def finish_session(session_id: int, current_user = Depends(get_current_user)):
     complete_session(session_id)
     return {"status": "session completed"}
 

@@ -13,3 +13,4 @@ sqlite-utils
 numpy
 PyMuPDF
 python-docx
+supabase

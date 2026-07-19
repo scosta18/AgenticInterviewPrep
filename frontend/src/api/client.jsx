@@ -1,10 +1,19 @@
 import axios from 'axios'
+import { supabase } from '../lib/supabase'
 
 const api = axios.create({
   baseURL: 'http://127.0.0.1:8000',
   headers: {
     'Content-Type': 'application/json'
   }
+})
+
+api.interceptors.request.use(async (config) =>{
+  const {data: { session } } = await supabase.auth.getSessions()
+  if (session?.access_token){
+    config.headers.Authorization = 'Bearer ${sessions.access_token'
+  }
+  return config
 })
 
 export const startSession = (data) => api.post('/interview/start', data)
